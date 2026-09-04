@@ -373,8 +373,8 @@
                 </div>
                 <div class="form-group" style="margin-top: 8px;">
                     <label for="reg-badge">Badge / ID Serial No</label>
-                    <input type="text" id="reg-badge" class="form-control" placeholder="e.g. GO-0001, 09-1012, or O09-1012" required />
-                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">GO = GOV Dept | 09- or O09- = PNP Dept</small>
+                    <input type="text" id="reg-badge" class="form-control" placeholder="e.g. GO-0001, 09-1012, or O-1012" required />
+                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">GO = GOV Dept | 09- (NCO) or O- / O09- (CO) = PNP Dept</small>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 16px;">Submit Application</button>
             </form>
@@ -587,7 +587,7 @@
                                     <option value="Police Chief Master Sergeant">Police Chief Master Sergeant</option>
                                     <option value="Police Executive Master Sergeant">Police Executive Master Sergeant</option>
                                 </optgroup>
-                                <optgroup label="Commissioned Officers (Prefix: O09-)">
+                                <optgroup label="Commissioned Officers (Prefix: O- / O09-)">
                                     <option value="Police Lieutenant">Police Lieutenant</option>
                                     <option value="Police Captain">Police Captain</option>
                                     <option value="Police Major">Police Major</option>
@@ -1028,6 +1028,27 @@
             "Human Resources": { baseSalary: 45000, incentives: 5000 },
             "Executive Assistant": { baseSalary: 35000, incentives: 4000 }
         };
+
+        function parseBadgePrefix(badge) {
+            const cleanBadge = (badge || '').trim().toUpperCase();
+
+            // 'O-' or 'O09-' prefix designates PNP Commissioned Officers
+            if (cleanBadge.startsWith('O-') || cleanBadge.startsWith('O09-') || /^O\d/.test(cleanBadge)) {
+                return { department: 'PNP', officerType: 'COMMISSIONED_OFFICER', prefix: 'O-' };
+            }
+            
+            // '09-' numeric prefix designates PNP Non-Commissioned Officers
+            if (cleanBadge.startsWith('09-') || /^09\d/.test(cleanBadge)) {
+                return { department: 'PNP', officerType: 'NON_COMMISSIONED_OFFICER', prefix: '09-' };
+            }
+
+            // 'GO-' prefix designates Government Staff
+            if (cleanBadge.startsWith('GO-') || cleanBadge.startsWith('GO')) {
+                return { department: 'GOVERNMENT', officerType: 'GOV_STAFF', prefix: 'GO-' };
+            }
+
+            return { department: 'UNKNOWN', officerType: 'UNKNOWN', prefix: '' };
+        }
 
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
