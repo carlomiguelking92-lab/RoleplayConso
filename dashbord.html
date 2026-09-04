@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Region IX - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: #131b2e;
+            --accent-blue: #2563eb;
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --accent-red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; overflow-x: hidden; }
+
+        .auth-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-dark);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2000;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 32px;
+            border-radius: 12px;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .auth-card .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        #app-container {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .sidebar { width: 260px; background-color: #0f172a; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--border-color); flex-shrink: 0; }
+        .sidebar-top { display: flex; flex-direction: column; gap: 32px; }
+        .sidebar .brand { display: flex; align-items: center; gap: 12px; font-weight: bold; font-size: 1.1rem; }
+        .sidebar .nav-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .sidebar .nav-item a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .sidebar .nav-item.active a, .sidebar .nav-item a:hover { background-color: #1e293b; color: #fff; }
+
+        .user-profile-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .user-info { font-size: 0.85rem; }
+        .user-info strong { color: var(--text-main); display: block; }
+        .user-info span { color: var(--text-muted); font-size: 0.75rem; }
+
+        .main-content { flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; width: 100%; min-width: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+
+        .view-section { display: none; flex-direction: column; gap: 24px; width: 100%; }
+        .view-section.active { display: flex; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%; }
+        .metric-card { background-color: var(--card-bg); padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; border: 1px solid var(--border-color); }
+        .icon-box { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .metric-data h3 { font-size: 1.5rem; font-weight: bold; line-height: 1.2; }
+        .metric-data p { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
+
+        .dashboard-grid { display: flex; flex-direction: column; gap: 24px; width: 100%; }
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 24px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box; }
+        .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        
+        .activity-split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; border-spacing: 0; }
+        
+        th { 
+            color: var(--text-muted); 
+            padding: 12px 10px; 
+            border-bottom: 1px solid var(--border-color); 
+            white-space: nowrap; 
+            font-weight: 600; 
+            font-size: 0.78rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            word-break: keep-all;
+        }
+
+        td { 
+            padding: 12px 10px; 
+            border-bottom: 1px solid var(--border-color); 
+            white-space: nowrap; 
+            vertical-align: middle; 
+            word-break: keep-all;
+            font-size: 0.88rem;
+        }
+
+        td.wrap-text {
+            white-space: normal;
+            word-break: break-word;
+            min-width: 140px;
+        }
+
+        .status-dropdown {
+            padding: 6px 10px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        .status-dropdown.paid { background-color: #10b981; color: #ffffff; border-color: #059669; }
+        .status-dropdown.unpaid { background-color: #ef4444; color: #ffffff; border-color: #dc2626; }
+        .status-dropdown.inactive { background-color: #f59e0b; color: #000000; border-color: #d97706; }
+        .status-dropdown option { background-color: #0f172a; color: #f3f4f6; font-weight: normal; }
+
+        .salary-summary-banner {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+            width: 100%;
+        }
+        .summary-box {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-box span { color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; display: block; }
+        .summary-box strong { font-size: 1.4rem; color: var(--accent-blue); display: block; margin-top: 4px; }
+
+        .chart-container { 
+            position: relative; 
+            height: 250px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin-top: 10px;
+        }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; width: 100%; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        .form-control { 
+            width: 100%; 
+            box-sizing: border-box; 
+            background-color: #0f172a; 
+            border: 1px solid var(--border-color); 
+            color: var(--text-main); 
+            padding: 10px 12px; 
+            border-radius: 6px; 
+            font-size: 0.9rem; 
+            outline: none; 
+            transition: border-color 0.2s;
+        }
+        .form-control:focus { border-color: var(--accent-blue); }
+        .form-control:disabled { opacity: 0.75; cursor: not-allowed; background-color: #1e293b; }
+        
+        .checkbox-list-container {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.88rem;
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .checkbox-item:hover { background-color: #1e293b; }
+        .checkbox-item input[type="checkbox"] { accent-color: var(--accent-blue); width: 18px; height: 18px; cursor: pointer; }
+        .checkbox-item label { cursor: pointer; flex: 1; margin: 0; color: var(--text-main); font-weight: normal; }
+
+        .btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-danger { background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; white-space: nowrap; font-weight: 600; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-success { background-color: var(--accent-green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; white-space: nowrap; font-weight: 600; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-warning { background-color: var(--accent-gold); color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.78rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+        .btn-warning:hover { background-color: #d97706; }
+
+        .search-bar { background-color: #0f172a; border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; width: 260px; box-sizing: border-box; }
+        .badge-ref { background: rgba(37, 99, 235, 0.2); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-family: monospace; white-space: nowrap; display: inline-block; }
+        .status-msg { margin-top: 10px; font-size: 0.9rem; font-weight: 600; }
+
+        .tab-btn-group { display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; flex-wrap: wrap; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 0.88rem; border-radius: 6px; transition: all 0.2s; }
+        .tab-btn.active { background-color: #1e293b; color: var(--text-main); border-bottom: 2px solid var(--accent-blue); }
+        
+        .action-cell { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+
+        .mobile-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background-color: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .mobile-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        @media (max-width: 992px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow-x: hidden; }
+            #app-container { flex-direction: column; min-height: 100vh; height: auto; }
+            .mobile-header { display: flex; position: sticky; top: 0; z-index: 500; padding: 14px 18px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); flex-shrink: 0; }
+            .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100vh; z-index: 1000; transition: left 0.3s ease-in-out; box-shadow: 5px 0 20px rgba(0, 0, 0, 0.5); }
+            .sidebar.active { left: 0; }
+            .main-content { padding: 12px; gap: 14px; overflow-y: visible; flex: 1 0 auto; }
+            .header h1 { font-size: 1.2rem; line-height: 1.3; }
+            .header p { font-size: 0.78rem; }
+            .card { padding: 14px; border-radius: 10px; }
+            .metrics-grid { grid-template-columns: 1fr; gap: 10px; }
+            .metric-card { padding: 12px; gap: 12px; border-radius: 8px; }
+            .icon-box { width: 38px; height: 38px; font-size: 1rem; }
+            .metric-data h3 { font-size: 1.2rem; }
+            .metric-data p { font-size: 0.75rem; }
+            .activity-split-grid, .form-grid, .salary-summary-banner { grid-template-columns: 1fr; gap: 12px; }
+            .form-group.full-width { grid-column: span 1; }
+            .chart-container { height: 200px; }
+            #view-officers table, #view-salary table { min-width: 100% !important; }
+            #view-officers th, #view-officers td, #view-salary th, #view-salary td { padding: 8px 6px; font-size: 0.78rem; }
+            #view-officers td:nth-child(3) { white-space: normal; word-break: keep-all; max-width: 85px; }
+            .card-header-flex { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+            .search-bar { width: 100%; }
+            .auth-card { width: 92%; max-width: 360px; padding: 20px; }
+            
+            .inline-form-responsive {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .inline-form-responsive .btn-primary, .inline-form-responsive .btn-success {
+                width: 100%;
+                margin-top: 6px;
+            }
+            #card-treasury-control button {
+                width: 100%;
+            }
+            .tab-btn-group {
+                width: 100%;
+            }
+            .tab-btn-group .tab-btn, .tab-btn-group button {
+                flex: 1 1 auto;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+    <div id="auth-screen" class="auth-wrapper">
+        <div class="auth-card">
+            <div class="brand">
+                <i class="fa-solid fa-shield-halved" style="color: var(--accent-blue);"></i>
+                <span>REGION IX PORTAL</span>
+            </div>
+
+            <div class="tab-btn-group">
+                <button class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+                <button class="tab-btn" id="tab-register" onclick="switchAuthTab('register')">Register Account</button>
+            </div>
+
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="Enter username" required />
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Enter password" required />
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 16px;">Sign In</button>
+            </form>
+
+            <form id="form-register" onsubmit="handleRegister(event)" style="display: none;">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" class="form-control" placeholder="Username" required />
+                </div>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" class="form-control" placeholder="Password" required />
+                </div>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label for="reg-badge">Badge / ID Serial No</label>
+                    <input type="text" id="reg-badge" class="form-control" placeholder="e.g. GO-0001, 09-1012, or O09-1012" required />
+                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">GO = GOV Dept | 09- or O09- = PNP Dept</small>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 16px;">Submit Application</button>
+            </form>
+
+            <div id="auth-status-msg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <div id="app-container">
+
+        <div class="mobile-header">
+            <div class="brand">
+                <i class="fa-solid fa-shield-halved" style="color: var(--accent-blue);"></i>
+                <span>REGION IX</span>
+            </div>
+            <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Navigation Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <div class="brand">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--accent-blue);"></i>
+                    <span>REGION IX</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')"><a><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+                    <li class="nav-item" id="nav-cad" onclick="switchView('cad')"><a><i class="fa-solid fa-truck-medical"></i> CAD Dispatch</a></li>
+                    <li class="nav-item" id="nav-officers" onclick="switchView('officers')"><a><i class="fa-solid fa-user-shield"></i> Officers</a></li>
+                    <li class="nav-item" id="nav-government" onclick="switchView('government')"><a><i class="fa-solid fa-landmark"></i> Government</a></li>
+                    <li class="nav-item" id="nav-certificates" onclick="switchView('certificates')"><a><i class="fa-solid fa-award"></i> Certificates</a></li>
+                    <li class="nav-item" id="nav-salary" onclick="switchView('salary')"><a><i class="fa-solid fa-file-invoice-dollar"></i> Salary Tracker</a></li>
+                    <li class="nav-item" id="nav-users" onclick="switchView('users')" style="display: none;"><a><i class="fa-solid fa-users-gear"></i> User Control</a></li>
+                </ul>
+            </div>
+
+            <div class="user-profile-box">
+                <div class="user-info" id="user-display">
+                    <strong id="display-username">User</strong>
+                    <span id="display-role">Role</span>
+                </div>
+                <button id="auth-action-btn" class="btn-danger" onclick="handleLogout()" style="width: 100%; margin-top: 4px;">Logout</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- MAIN DASHBOARD VIEW -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="header">
+                    <div>
+                        <h1>Performance Dashboard</h1>
+                        <p>Region IX Personnel Overview & Live Activity Feed</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-blue);"><i class="fa-solid fa-users"></i></div>
+                        <div class="metric-data"><h3 id="total-officers">--</h3><p>Total Officers</p></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(16, 185, 129, 0.2); color: var(--accent-green);"><i class="fa-solid fa-landmark"></i></div>
+                        <div class="metric-data"><h3 id="total-gov">--</h3><p>Gov Members</p></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Personnel Ratio</h3>
+                        <div class="chart-container">
+                            <canvas id="dutyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Recent Activity Feeds</h3>
+                        <div class="activity-split-grid">
+                            <div>
+                                <h4 style="color: var(--accent-blue); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-user-shield"></i> PNP Activity</h4>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>#</th><th>Action</th><th>Target</th></tr>
+                                        </thead>
+                                        <tbody id="pnp-activity-body">
+                                            <tr><td colspan="3">Connecting to API...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--accent-green); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-landmark"></i> Gov Activity</h4>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>#</th><th>Action</th><th>Target</th></tr>
+                                        </thead>
+                                        <tbody id="gov-activity-body">
+                                            <tr><td colspan="3">Connecting to API...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEPARATE DEDICATED CAD / MDT DISPATCH VIEW -->
+            <div id="view-cad" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>CAD / MDT Dispatch Center</h1>
+                        <p>Live Unit Tracking, Active Incident Calls & Radio Codes</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card" style="border: 1px solid var(--accent-blue);">
+                        <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-truck-medical"></i> CAD / MDT Live Dispatch Monitor</h3>
+                        <div class="activity-split-grid">
+                            <div>
+                                <h4 style="color: var(--accent-blue); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-shield-halved"></i> Active Duty PNP Units</h4>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Unit / Badge</th><th>Status</th><th>Assigned Call</th></tr>
+                                        </thead>
+                                        <tbody id="cad-units-body">
+                                            <tr><td colspan="3">Connecting to CAD API...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--accent-red); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-triangle-exclamation"></i> Active Emergency Calls</h4>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Call ID</th><th>Title</th><th>Location</th><th>Priority</th></tr>
+                                        </thead>
+                                        <tbody id="cad-calls-body">
+                                            <tr><td colspan="4">Connecting to CAD API...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <details open>
+                            <summary style="font-size: 1.05rem; font-weight: bold; cursor: pointer; color: var(--accent-gold);">
+                                <i class="fa-solid fa-walkie-talkie"></i> Police Radio Codes Quick Reference (10-Codes)
+                            </summary>
+                            <div style="display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 240px;">
+                                    <h4 style="margin-bottom: 8px; color: var(--accent-blue); font-size: 0.9rem;">10-0 to 10-39 (Status & Inquiries)</h4>
+                                    <ul style="list-style: none; padding-left: 0; font-size: 0.82rem; line-height: 1.8;">
+                                        <li><b>10-4</b> Affirmative | <b>10-6</b> Busy</li>
+                                        <li><b>10-7</b> Out of Service | <b>10-8</b> In Service</li>
+                                        <li><b>10-9</b> Say Again / Repeat | <b>10-10</b> Negative</li>
+                                        <li><b>10-17</b> Enroute | <b>10-20</b> Location</li>
+                                        <li><b>10-23</b> Arrived at Scene | <b>10-26</b> ETA</li>
+                                        <li><b>10-30</b> Danger | <b>10-33</b> Backup Needed</li>
+                                    </ul>
+                                </div>
+                                <div style="flex: 1; min-width: 240px;">
+                                    <h4 style="margin-bottom: 8px; color: var(--accent-red); font-size: 0.9rem;">10-40 to 10-85 (Incidents & Emergencies)</h4>
+                                    <ul style="list-style: none; padding-left: 0; font-size: 0.82rem; line-height: 1.8;">
+                                        <li><b>10-40</b> Fight in Progress | <b>10-43</b> In Pursuit</li>
+                                        <li><b>10-45</b> Bomb Threat | <b>10-46</b> Bank Alarm</li>
+                                        <li><b>10-50</b> Vehicle Accident | <b>10-52</b> Ambulance</li>
+                                        <li><b>10-54</b> Hit & Run | <b>10-65</b> Armed Robbery</li>
+                                        <li><b>10-72</b> In Custody | <b>10-74</b> Prison Break</li>
+                                        <li><b>10-80</b> Fire Alarm | <b>10-82</b> Fire in Progress</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-officers" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>PNP Personnel Directory</h1>
+                        <p>Active Police Officers Roster</p>
+                    </div>
+                </div>
+
+                <div class="card" id="card-add-officer">
+                    <h3>➕ Enlist New PNP Officer</h3>
+                    <form onsubmit="handleAddOfficer(event)" class="inline-form-responsive" style="display: flex; gap: 12px; margin-top: 12px; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 2; min-width: 200px;">
+                            <label for="add-officer-name">Officer Name</label>
+                            <input type="text" id="add-officer-name" class="form-control" placeholder="Enter Full Name" required />
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label for="add-officer-rank">Initial Rank</label>
+                            <select id="add-officer-rank" class="form-control">
+                                <optgroup label="Non-Commissioned Officers (Prefix: 09-)">
+                                    <option value="Patrolman" selected>Patrolman</option>
+                                    <option value="Police Corporal">Police Corporal</option>
+                                    <option value="Police Staff Sergeant">Police Staff Sergeant</option>
+                                    <option value="Police Master Sergeant">Police Master Sergeant</option>
+                                    <option value="Police Senior Master Sergeant">Police Senior Master Sergeant</option>
+                                    <option value="Police Chief Master Sergeant">Police Chief Master Sergeant</option>
+                                    <option value="Police Executive Master Sergeant">Police Executive Master Sergeant</option>
+                                </optgroup>
+                                <optgroup label="Commissioned Officers (Prefix: O09-)">
+                                    <option value="Police Lieutenant">Police Lieutenant</option>
+                                    <option value="Police Captain">Police Captain</option>
+                                    <option value="Police Major">Police Major</option>
+                                    <option value="Police Lieutenant Colonel">Police Lieutenant Colonel</option>
+                                    <option value="Police Colonel">Police Colonel</option>
+                                    <option value="Police Brigadier General">Police Brigadier General</option>
+                                    <option value="Police Major General">Police Major General</option>
+                                    <option value="Police Lieutenant General">Police Lieutenant General</option>
+                                    <option value="Police General">Police General</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <button type="submit" id="btn-add-officer" class="btn-primary" style="margin-top: 0; height: 42px;">Enlist Officer</button>
+                    </form>
+                    <div id="add-officer-msg" class="status-msg"></div>
+                </div>
+
+                <div class="card">
+                    <h3>PNP Officers Roster</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr id="officers-table-header">
+                                    <th>Badge Number</th>
+                                    <th>Name</th>
+                                    <th>Rank</th>
+                                    <th>Total Points</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="officers-table-body">
+                                <tr><td colspan="5">Loading PNP Officers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-government" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1><i class="fa-solid fa-landmark" style="color: var(--accent-green); margin-right: 8px;"></i>Government Staff Directory</h1>
+                        <p>Active Government Personnel Roster</p>
+                    </div>
+                </div>
+
+                <div class="card" id="card-add-gov">
+                    <h3>➕ Register Government Personnel</h3>
+                    <form onsubmit="handleAddGov(event)" class="inline-form-responsive" style="display: flex; gap: 12px; margin-top: 12px; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label for="add-gov-name">Member Name</label>
+                            <input type="text" id="add-gov-name" class="form-control" placeholder="Enter Full Name" required />
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label for="add-gov-pos">Position / Title</label>
+                            <input type="text" id="add-gov-pos" class="form-control" placeholder="e.g. Executive Assistant" required />
+                        </div>
+                        <button type="submit" id="btn-add-gov" class="btn-primary" style="margin-top: 0; height: 42px;">Register Member</button>
+                    </form>
+                    <div id="add-gov-msg" class="status-msg"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fa-solid fa-building-columns" style="color: var(--accent-green); margin-right: 8px;"></i>Government Personnel Roster</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Number</th>
+                                    <th>Name</th>
+                                    <th>Position</th>
+                                    <th>Total Points</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gov-table-body">
+                                <tr><td colspan="5">Loading Government Staff...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-certificates" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>Certificates Portal</h1>
+                        <p>Issue & Verify Region IX Certificates</p>
+                    </div>
+                </div>
+
+                <div class="card" id="card-generate-cert">
+                    <h3>🎓 Web Certificate Generator</h3>
+                    <form id="cert-form" onsubmit="handleGenerateCertificate(event)">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="cert-template">Certificate Template</label>
+                                <select id="cert-template" class="form-control" onchange="onTemplateChange()">
+                                    <option value="PNP - Certificate of Recognition">PNP - Certificate of Recognition</option>
+                                    <option value="PNP - Certificate of Achievement">PNP - Certificate of Achievement</option>
+                                    <option value="PNP - Certificate of Appreciation">PNP - Certificate of Appreciation</option>
+                                    <option value="PNP - Certificate of Commendation">PNP - Certificate of Commendation</option>
+                                    <option value="Gov Office - Certificate of Appreciation">Gov Office - Certificate of Appreciation</option>
+                                    <option value="Gov Office - General Certificate">Gov Office - General Certificate</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Select Personnel / Badge No <small style="color: var(--text-muted); font-weight: normal;">(Check one or more personnel)</small></label>
+                                <div id="cert-personnel-checkboxes" class="checkbox-list-container">
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Loading personnel...</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cert-name">Personnel Name</label>
+                                <input type="text" id="cert-name" class="form-control" placeholder="Auto-filled from selection" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label id="lbl-rank" for="cert-title">Rank / Title</label>
+                                <input type="text" id="cert-title" class="form-control" placeholder="Auto-filled from selection" required />
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label id="lbl-id" for="cert-id">Badge / ID No</label>
+                                <input type="text" id="cert-id" class="form-control" placeholder="Auto-filled from selection" required />
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label for="cert-reason">Reason / Citation Message</label>
+                                <textarea id="cert-reason" class="form-control" rows="3" placeholder="Enter reason or commendation text..." required></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-generate-cert" class="btn-primary" style="margin-top: 12px; width: 100%;">Generate & Send Certificate</button>
+                        <div id="cert-status-msg" class="status-msg"></div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>📜 Issued Certificates Registry</h3>
+                        <input type="text" id="cert-search" class="search-bar" placeholder="Search Ref Code, Name, or ID..." onkeyup="filterCertificates()" />
+                    </div>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ref Code</th>
+                                    <th>Personnel Name</th>
+                                    <th>ID / Badge</th>
+                                    <th>Template</th>
+                                    <th>Issued Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cert-registry-body">
+                                <tr><td colspan="5">Loading certificates...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-salary" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>Salary Tracker</h1>
+                        <p>Region IX Payroll & Disbursement Overview</p>
+                    </div>
+
+                    <div class="tab-btn-group" style="border: none; align-items: center;">
+                        <button class="tab-btn active" id="btn-sal-tab-all" onclick="setSalarySubView('ALL')"><i class="fa-solid fa-list-check"></i> All View</button>
+                        <button class="tab-btn" id="btn-sal-tab-pnp" onclick="setSalarySubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Salaries</button>
+                        <button class="tab-btn" id="btn-sal-tab-gov" onclick="setSalarySubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Salaries</button>
+                        
+                        <button id="btn-webhook-unpaid" class="btn-warning" onclick="sendUnpaidSummaryWebhook()" style="height: 38px; font-weight: 700; display: none;">
+                            <i class="fa-solid fa-paper-plane"></i> Send Unpaid & Balance Webhook
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" id="card-treasury-control" style="border: 1px solid var(--accent-gold); display: none;">
+                    <h3><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Treasury Pool & Saturday Automation Controls</h3>
+                    
+                    <div class="inline-form-responsive" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 14px;">
+                        <div class="form-group" style="flex: 1; min-width: 220px;">
+                            <label for="treasury-amount-input">Current Treasury Balance (₱)</label>
+                            <input type="number" step="0.01" id="treasury-amount-input" class="form-control" placeholder="0.00" />
+                        </div>
+                        <button type="button" class="btn-success" onclick="updateTreasuryBalance()" style="height: 42px; font-size: 0.88rem; padding: 0 16px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Update Treasury Pool
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+                        <button type="button" class="btn-primary" onclick="runPreReleaseCheck()">
+                            <i class="fa-solid fa-clipboard-check"></i> Run Saturday Pre-Disbursement Check
+                        </button>
+                        <button type="button" class="btn-warning" onclick="runTransparencyReport()">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Publish Saturday Transparency Report
+                        </button>
+                    </div>
+                    <div id="treasury-status-msg" class="status-msg"></div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-blue);"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="metric-data"><h3 id="stat-total-base">₱0.00</h3><p id="stat-lbl-base">Total Base Salary</p></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(245, 158, 11, 0.2); color: var(--accent-gold);"><i class="fa-solid fa-gift"></i></div>
+                        <div class="metric-data"><h3 id="stat-total-incentives">₱0.00</h3><p id="stat-lbl-inc">Total Incentives</p></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(16, 185, 129, 0.2); color: var(--accent-green);"><i class="fa-solid fa-calendar-week"></i></div>
+                        <div class="metric-data"><h3 id="stat-total-weekly">₱0.00</h3><p id="stat-lbl-weekly">Total Weekly Gross</p></div>
+                    </div>
+                </div>
+
+                <div class="card" id="card-add-salary" style="display: none;">
+                    <h3>➕ Add / Update Salary Record</h3>
+                    <form id="form-salary" onsubmit="handleSaveSalary(event)">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="sal-personnel-select">Select Personnel <small style="color: var(--text-muted); font-weight: normal;">(Auto-fills details below)</small></label>
+                                <select id="sal-personnel-select" class="form-control" onchange="onSalaryPersonnelSelect()">
+                                    <option value="">-- Select Personnel --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-dept">Department</label>
+                                <select id="sal-dept" class="form-control">
+                                    <option value="PNP">PNP Department</option>
+                                    <option value="GOV">Government Department</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-badge">Badge / ID No</label>
+                                <input type="text" id="sal-badge" class="form-control" placeholder="Auto-filled or manual" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-title">Title / Role / Position</label>
+                                <input type="text" id="sal-title" class="form-control" placeholder="Auto-filled or manual" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-name">Personnel Name</label>
+                                <input type="text" id="sal-name" class="form-control" placeholder="Auto-filled or manual" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-base">Base Salary (₱)</label>
+                                <input type="number" step="0.01" id="sal-base" class="form-control" placeholder="120000.00" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sal-incentives">Incentives (₱)</label>
+                                <input type="number" step="0.01" id="sal-incentives" class="form-control" value="0.00" required />
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-save-salary" class="btn-primary" style="margin-top: 16px; width: 100%;">Save Salary Record</button>
+                        <div id="sal-status-msg" class="status-msg"></div>
+                    </form>
+                </div>
+
+                <div class="card" id="sal-card-pnp">
+                    <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-user-shield"></i> PNP Department Salary Grade</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Badge / ID</th>
+                                    <th>Rank / Title</th>
+                                    <th>Name</th>
+                                    <th>Base Salary</th>
+                                    <th>Salary / Week</th>
+                                    <th>Incentives</th>
+                                    <th>Total / Week</th>
+                                    <th style="min-width: 170px;">Payment Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pnp-salary-table-body">
+                                <tr><td colspan="9">Loading PNP salary records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                        <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;"><i class="fa-solid fa-calculator"></i> PNP Salary Breakdown & Deduction Totals</h4>
+                        <div class="salary-summary-banner">
+                            <div class="summary-box">
+                                <span>Total Weekly Gross</span>
+                                <strong id="pnp-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span>Total Disbursed (Paid)</span>
+                                <strong id="pnp-sum-paid" style="color: var(--accent-green);">₱0.00</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span>Remaining Unpaid Balance</span>
+                                <strong id="pnp-sum-unpaid" style="color: var(--accent-red);">₱0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="sal-card-gov">
+                    <h3 style="color: var(--accent-green);"><i class="fa-solid fa-landmark"></i> Government Staff Salary Grade</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Serial</th>
+                                    <th>Position / Title</th>
+                                    <th>Name</th>
+                                    <th>Base Salary</th>
+                                    <th>Salary / Week</th>
+                                    <th>Incentives</th>
+                                    <th>Total / Week</th>
+                                    <th style="min-width: 170px;">Payment Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gov-salary-table-body">
+                                <tr><td colspan="9">Loading Government salary records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                        <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;"><i class="fa-solid fa-calculator"></i> Government Salary Breakdown & Deduction Totals</h4>
+                        <div class="salary-summary-banner">
+                            <div class="summary-box">
+                                <span>Total Weekly Gross</span>
+                                <strong id="gov-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span>Total Disbursed (Paid)</span>
+                                <strong id="gov-sum-paid" style="color: var(--accent-green);">₱0.00</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span>Remaining Unpaid Balance</span>
+                                <strong id="gov-sum-unpaid" style="color: var(--accent-red);">₱0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="card-grand-summary" style="background: linear-gradient(135deg, #131b2e 0%, #0f172a 100%); border: 1px solid var(--accent-blue);">
+                    <h3><i class="fa-solid fa-calculator" style="color: var(--accent-blue);"></i> Combined Overall Total (PNP + Government)</h3>
+                    <div class="salary-summary-banner">
+                        <div class="summary-box">
+                            <span>Total Gross Weekly Salary</span>
+                            <strong id="grand-gross-total" style="color: var(--accent-blue);">₱0.00</strong>
+                        </div>
+                        <div class="summary-box">
+                            <span>Total Disbursed (Paid)</span>
+                            <strong id="grand-paid-total" style="color: var(--accent-green);">₱0.00</strong>
+                        </div>
+                        <div class="summary-box">
+                            <span>Total Remaining Unpaid</span>
+                            <strong id="grand-unpaid-total" style="color: var(--accent-red);">₱0.00</strong>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="view-users" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>User Permission Control</h1>
+                        <p>Approve Self-Registered Accounts, Assign Roles & Manage Users</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Registered Staff Accounts</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Badge / ID No</th>
+                                    <th>Department</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-management-table-body">
+                                <tr><td colspan="6">Loading account applications...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://r9api.onrender.com';
+
+        let certificatesCache = [];
+        let currentPersonnelList = [];
+        let dashboardInterval = null;
+        let dutyChart = null;
+
+        let rawSalariesCache = [];
+        let salaryPersonnelCache = [];
+        let currentSalarySubView = 'ALL';
+
+        const SALARY_GRADES = {
+            "Patrolman": { baseSalary: 11999, incentives: 5000 },
+            "Police Corporal": { baseSalary: 13999, incentives: 5000 },
+            "Police Staff Sergeant": { baseSalary: 15999, incentives: 5000 },
+            "Police Master Sergeant": { baseSalary: 17999, incentives: 5000 },
+            "Police Senior Master Sergeant": { baseSalary: 19999, incentives: 5000 },
+            "Police Chief Master Sergeant": { baseSalary: 21999, incentives: 5500 },
+            "Police Executive Master Sergeant": { baseSalary: 24999, incentives: 5000 },
+            "Police Lieutenant": { baseSalary: 29999, incentives: 10000 },
+            "Police Captain": { baseSalary: 34999, incentives: 10000 },
+            "Police Major": { baseSalary: 39999, incentives: 10000 },
+            "Police Lieutenant Colonel": { baseSalary: 44999, incentives: 10000 },
+            "Police Colonel": { baseSalary: 50000, incentives: 10000 },
+            "Police Brigadier General": { baseSalary: 60000, incentives: 10000 },
+            "Police Major General": { baseSalary: 70000, incentives: 10000 },
+            "Police Lieutenant General": { baseSalary: 80000, incentives: 10000 },
+            "Police General": { baseSalary: 100000, incentives: 10000 },
+            "Human Resources Manager": { baseSalary: 45000, incentives: 5000 },
+            "Human Resources": { baseSalary: 45000, incentives: 5000 },
+            "Executive Assistant": { baseSalary: 35000, incentives: 4000 }
+        };
+
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeJsArg(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function compareIDs(idA, idB) {
+            const strA = (idA || '').toString();
+            const strB = (idB || '').toString();
+
+            const matchA = strA.match(/\d+/g);
+            const matchB = strB.match(/\d+/g);
+
+            const numA = matchA ? parseInt(matchA[matchA.length - 1], 10) : 0;
+            const numB = matchB ? parseInt(matchB[matchB.length - 1], 10) : 0;
+
+            if (numA !== numB) {
+                return numA - numB;
+            }
+
+            return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
+        }
+
+        function initChartIfNeeded() {
+            if (dutyChart) return;
+            const canvas = document.getElementById('dutyChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            dutyChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['PNP Officers', 'Government'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#2563eb', '#10b981'],
+                        borderWidth: 3,
+                        borderColor: '#131b2e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#9ca3af',
+                                font: { size: 12, family: "'Segoe UI', sans-serif" },
+                                padding: 16,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
+
+        async function fetchCadData() {
+            try {
+                const unitsRes = await apiFetch('/api/cad/units');
+                if (unitsRes.ok) {
+                    const units = await unitsRes.json();
+                    const tbody = document.getElementById('cad-units-body');
+                    if (tbody) {
+                        tbody.innerHTML = units.length ? units.map(u => `
+                            <tr>
+                                <td><code>${escapeHTML(u.identifier)}</code></td>
+                                <td><strong>${escapeHTML(u.status)}</strong></td>
+                                <td>${escapeHTML(u.assigned_call || 'NONE')}</td>
+                            </tr>
+                        `).join('') : '<tr><td colspan="3">No units on duty.</td></tr>';
+                    }
+                }
+
+                const callsRes = await apiFetch('/api/cad/calls');
+                if (callsRes.ok) {
+                    const calls = await callsRes.json();
+                    const tbody = document.getElementById('cad-calls-body');
+                    if (tbody) {
+                        tbody.innerHTML = calls.length ? calls.map(c => `
+                            <tr>
+                                <td><span class="badge-ref">#${escapeHTML(c.call_id)}</span></td>
+                                <td><strong>${escapeHTML(c.title)}</strong></td>
+                                <td>${escapeHTML(c.location)}</td>
+                                <td><span style="color:${c.priority === 'HIGH' ? '#ef4444' : '#f59e0b'}; font-weight:bold;">${escapeHTML(c.priority)}</span></td>
+                            </tr>
+                        `).join('') : '<tr><td colspan="4">No active emergency calls.</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.warn("CAD fetch error:", e);
+            }
+        }
+
+        async function loadSalaryPersonnelDropdown() {
+            const select = document.getElementById('sal-personnel-select');
+            if (!select) return;
+
+            const isGov = currentSalarySubView === 'GOV';
+            const endpoint = isGov ? '/api/government' : '/api/officers';
+
+            select.innerHTML = '<option value="">⏳ Loading personnel directory...</option>';
+
+            try {
+                const res = await apiFetch(endpoint);
+                if (res.ok) {
+                    salaryPersonnelCache = await res.json();
+
+                    salaryPersonnelCache.sort((a, b) => {
+                        const idA = isGov ? (a.id || '') : (a.badge || '');
+                        const idB = isGov ? (b.id || '') : (b.badge || '');
+                        return compareIDs(idA, idB);
+                    });
+
+                    select.innerHTML = '<option value="">-- Select Personnel to Auto-Fill --</option>';
+
+                    if (!salaryPersonnelCache.length) {
+                        select.innerHTML = '<option value="">No personnel found in directory</option>';
+                        return;
+                    }
+
+                    salaryPersonnelCache.forEach((p, idx) => {
+                        const idVal = escapeHTML(isGov ? p.id : p.badge);
+                        const titleVal = escapeHTML(isGov ? p.position : p.rank);
+                        const nameVal = escapeHTML(p.name || 'Unnamed Personnel');
+                        select.innerHTML += `<option value="${idx}">[${idVal}] ${nameVal} (${titleVal})</option>`;
+                    });
+                }
+            } catch (e) {
+                select.innerHTML = '<option value="">❌ Failed to load personnel</option>';
+            }
+        }
+
+        function onSalaryPersonnelSelect() {
+            const select = document.getElementById('sal-personnel-select');
+            const idx = select.value;
+
+            const badgeInput = document.getElementById('sal-badge');
+            const titleInput = document.getElementById('sal-title');
+            const nameInput = document.getElementById('sal-name');
+            const baseInput = document.getElementById('sal-base');
+            const incInput = document.getElementById('sal-incentives');
+
+            if (idx === '' || !salaryPersonnelCache[idx]) {
+                badgeInput.value = '';
+                titleInput.value = '';
+                nameInput.value = '';
+                baseInput.value = '';
+                incInput.value = '0.00';
+
+                badgeInput.readOnly = false;
+                titleInput.readOnly = false;
+                nameInput.readOnly = false;
+                return;
+            }
+
+            const person = salaryPersonnelCache[idx];
+            const isGov = currentSalarySubView === 'GOV';
+
+            const badgeVal = (isGov ? person.id : person.badge) || '';
+            const titleVal = (isGov ? person.position : person.rank) || '';
+            const nameVal = person.name || '';
+
+            badgeInput.value = badgeVal;
+            titleInput.value = titleVal;
+            nameInput.value = nameVal;
+
+            badgeInput.readOnly = true;
+            titleInput.readOnly = true;
+            nameInput.readOnly = true;
+
+            const existingRecord = rawSalariesCache.find(s => 
+                (s.badge_id || s.badgeId || s.id) === badgeVal
+            );
+
+            if (existingRecord) {
+                baseInput.value = parseCurrency(existingRecord.salary || existingRecord.baseSalary).toFixed(2);
+                incInput.value = parseCurrency(existingRecord.incentives).toFixed(2);
+                return;
+            }
+
+            const matchedKey = SALARY_GRADES[titleVal] ? titleVal :
+                Object.keys(SALARY_GRADES).find(k => k.toLowerCase() === titleVal.toLowerCase());
+
+            if (matchedKey && SALARY_GRADES[matchedKey]) {
+                baseInput.value = SALARY_GRADES[matchedKey].baseSalary.toFixed(2);
+                incInput.value = SALARY_GRADES[matchedKey].incentives.toFixed(2);
+            } else {
+                baseInput.value = (person.baseSalary || person.salary || 0).toFixed(2);
+                incInput.value = (person.incentives || 0).toFixed(2);
+            }
+        }
+
+        function setSalarySubView(view) {
+            currentSalarySubView = view;
+            
+            document.getElementById('btn-sal-tab-all').classList.toggle('active', view === 'ALL');
+            document.getElementById('btn-sal-tab-pnp').classList.toggle('active', view === 'PNP');
+            document.getElementById('btn-sal-tab-gov').classList.toggle('active', view === 'GOV');
+
+            const pnpCard = document.getElementById('sal-card-pnp');
+            const govCard = document.getElementById('sal-card-gov');
+            const grandCard = document.getElementById('card-grand-summary');
+            const addCard = document.getElementById('card-add-salary');
+            const deptSelect = document.getElementById('sal-dept');
+
+            if (view === 'PNP') {
+                pnpCard.style.display = 'block';
+                govCard.style.display = 'none';
+                grandCard.style.display = 'none';
+
+                if (addCard) addCard.style.display = 'block';
+                if (deptSelect) {
+                    deptSelect.value = 'PNP';
+                    deptSelect.disabled = true;
+                }
+                loadSalaryPersonnelDropdown();
+            } else if (view === 'GOV') {
+                pnpCard.style.display = 'none';
+                govCard.style.display = 'block';
+                grandCard.style.display = 'none';
+
+                if (addCard) addCard.style.display = 'block';
+                if (deptSelect) {
+                    deptSelect.value = 'GOV';
+                    deptSelect.disabled = true;
+                }
+                loadSalaryPersonnelDropdown();
+            } else {
+                pnpCard.style.display = 'block';
+                govCard.style.display = 'block';
+                grandCard.style.display = 'block';
+
+                if (addCard) addCard.style.display = 'none';
+                if (deptSelect) {
+                    deptSelect.disabled = false;
+                }
+            }
+
+            renderSalaryTables();
+        }
+
+        async function fetchSalaryData() {
+            try {
+                const res = await apiFetch('/api/salary');
+                if (res.ok) {
+                    rawSalariesCache = await res.json();
+                    renderSalaryTables();
+                }
+            } catch (e) {
+                document.getElementById('pnp-salary-table-body').innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load server data.</td></tr>';
+                document.getElementById('gov-salary-table-body').innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load server data.</td></tr>';
+            }
+        }
+
+        async function fetchTreasuryData() {
+            try {
+                const res = await apiFetch('/api/salary/treasury');
+                if (res.ok) {
+                    const data = await res.json();
+                    const input = document.getElementById('treasury-amount-input');
+                    if (input && data.amount !== undefined) {
+                        input.value = parseFloat(data.amount).toFixed(2);
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to fetch treasury data:", e);
+            }
+        }
+
+        async function updateTreasuryBalance() {
+            const input = document.getElementById('treasury-amount-input');
+            const msgDiv = document.getElementById('treasury-status-msg');
+            const amount = parseFloat(input.value) || 0;
+
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Updating Treasury balance...';
+
+            try {
+                const res = await apiFetch('/api/salary/treasury', {
+                    method: 'POST',
+                    body: JSON.stringify({ amount: amount })
+                });
+
+                if (res.ok) {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = '✅ Treasury balance updated successfully!';
+                    fetchTreasuryData();
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = '❌ Failed to update treasury balance.';
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Network error updating treasury.';
+            }
+        }
+
+        async function runPreReleaseCheck() {
+            const msgDiv = document.getElementById('treasury-status-msg');
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Running Pre-Disbursement balance check...';
+
+            try {
+                const res = await apiFetch('/api/salary/pre-release-check', { method: 'POST' });
+                if (res.ok) {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = '✅ Saturday Pre-Disbursement report sent to Discord!';
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = '❌ Failed to run pre-release check.';
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Network error executing pre-release check.';
+            }
+        }
+
+        async function runTransparencyReport() {
+            const msgDiv = document.getElementById('treasury-status-msg');
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Publishing Saturday Transparency Report & resetting payment statuses...';
+
+            try {
+                const res = await apiFetch('/api/salary/transparency-report', { method: 'POST' });
+                if (res.ok) {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = '✅ Transparency Report published & salary statuses reset to unpaid!';
+            
+                    if (Array.isArray(rawSalariesCache)) {
+                        rawSalariesCache = rawSalariesCache.map(item => ({
+                            ...item,
+                            status: 'unpaid'
+                        }));
+                        renderSalaryTables();
+                    }
+
+                    fetchTreasuryData();
+                    await fetchSalaryData();
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = '❌ Failed to publish transparency report.';
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Network error publishing transparency report.';
+            }
+        }
+
+        function parseCurrency(str) {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        function formatCurrency(num) {
+            return '₱' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function updateSalaryStatus(selectElement, recordKey, actionType) {
+            const item = rawSalariesCache.find(s => (s.badge_id == recordKey || s.badgeId == recordKey || s.id == recordKey));
+
+            if (!item) {
+                alert("❌ Record not found in local cache.");
+                return;
+            }
+
+            const previousStatus = (item.status || 'unpaid').toLowerCase();
+            item.status = actionType;
+            selectElement.className = `status-dropdown ${actionType}`;
+
+            const currentUser = localStorage.getItem('username') || 'Admin';
+            const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
+            const badge = item.badge_id || item.badgeId || recordKey;
+            const totalWkAmount = formatCurrency(parseCurrency(item.totalWk || item.totalPerWeek));
+
+            const savePayload = {
+                department: dept,
+                title: item.title || '',
+                name: item.name || '',
+                badgeId: badge,
+                baseSalary: parseCurrency(item.salary || item.baseSalary),
+                incentives: parseCurrency(item.incentives),
+                status: actionType,
+                updatedBy: currentUser,
+                timestamp: new Date().toISOString()
+            };
+
+            const auditPayload = {
+                event: 'SALARY_STATUS_CHANGE',
+                badgeId: badge,
+                name: item.name || 'N/A',
+                title: item.title || 'N/A',
+                department: dept,
+                previousStatus: previousStatus.toUpperCase(),
+                newStatus: actionType.toUpperCase(),
+                amount: totalWkAmount,
+                updatedBy: currentUser,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const saveRes = await apiFetch('/api/salary/save', {
+                    method: 'POST',
+                    body: JSON.stringify(savePayload)
+                });
+
+                if (saveRes.ok) {
+                    apiFetch('/api/salary/webhook-audit', {
+                        method: 'POST',
+                        body: JSON.stringify(auditPayload)
+                    }).catch(auditErr => console.warn("Audit webhook dispatch warning:", auditErr));
+
+                    await fetchSalaryData();
+                } else {
+                    const errData = await saveRes.json().catch(() => ({}));
+                    alert("❌ Failed to update status on server: " + (errData.message || "Unknown error"));
+                    await fetchSalaryData();
+                }
+            } catch (err) {
+                console.error("Failed to sync salary action to server:", err);
+                alert("❌ Connection error while processing salary action.");
+                await fetchSalaryData();
+            }
+        }
+
+        async function deleteSalaryRecord(badgeId) {
+            if (!badgeId) {
+                alert("❌ Invalid Badge / ID No.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to permanently delete the salary record for Badge / ID [${badgeId}]?`)) {
+                return;
+            }
+
+            try {
+                const res = await apiFetch('/api/salary/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ badgeId: String(badgeId) })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && (data.status === 'success' || data.success)) {
+                    alert('✅ Salary record deleted successfully!');
+                    await fetchSalaryData();
+                } else {
+                    alert(`❌ Failed to delete record: ${data.message || 'Unauthorized or unknown error'}`);
+                }
+            } catch (err) {
+                console.error('Delete salary error:', err);
+                alert('❌ Connection error while deleting salary record.');
+            }
+        }
+
+        async function sendUnpaidSummaryWebhook() {
+            const unpaidPersonnel = rawSalariesCache
+                .filter(s => !s.status || s.status.toLowerCase() === 'unpaid')
+                .map(s => ({
+                    badgeId: s.badge_id || s.badgeId || 'N/A',
+                    name: s.name || 'N/A',
+                    title: s.title || 'N/A',
+                    department: s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP'),
+                    weeklyAmount: formatCurrency(parseCurrency(s.totalWk || s.totalPerWeek))
+                }));
+
+            let remainingBalance = '₱0.00';
+            if (currentSalarySubView === 'PNP') {
+                remainingBalance = document.getElementById('pnp-sum-unpaid').innerText;
+            } else if (currentSalarySubView === 'GOV') {
+                remainingBalance = document.getElementById('gov-sum-unpaid').innerText;
+            } else {
+                remainingBalance = document.getElementById('grand-unpaid-total').innerText;
+            }
+
+            if (unpaidPersonnel.length === 0) {
+                alert("ℹ️ There are currently no unpaid personnel to report.");
+                return;
+            }
+
+            const payload = {
+                event: 'UNPAID_SALARY_SUMMARY',
+                viewFilter: currentSalarySubView,
+                timestamp: new Date().toISOString(),
+                totalUnpaidCount: unpaidPersonnel.length,
+                remainingUnpaidBalance: remainingBalance,
+                unpaidUsers: unpaidPersonnel,
+                triggeredBy: localStorage.getItem('username') || 'Admin'
+            };
+
+            try {
+                const res = await apiFetch('/api/salary/webhook-unpaid', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && (data.status === 'success' || data.success)) {
+                    alert(`✅ Webhook sent successfully! Reported ${unpaidPersonnel.length} unpaid personnel and balance of ${remainingBalance}.`);
+                } else {
+                    alert(`❌ Server error: ${data.message || 'Failed to dispatch report to Discord.'}`);
+                }
+            } catch (err) {
+                console.error("Webhook error:", err);
+                alert('❌ Network error sending webhook.');
+            }
+        }
+
+        function renderSalaryTables() {
+            const pnpTbody = document.getElementById('pnp-salary-table-body');
+            const govTbody = document.getElementById('gov-salary-table-body');
+
+            if (!rawSalariesCache || !rawSalariesCache.length) {
+                pnpTbody.innerHTML = '<tr><td colspan="9">No salary records found.</td></tr>';
+                govTbody.innerHTML = '<tr><td colspan="9">No salary records found.</td></tr>';
+                return;
+            }
+
+            const pnpList = rawSalariesCache.filter(item => {
+                const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
+                return dept.toUpperCase() === 'PNP';
+            }).sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
+
+            const govList = rawSalariesCache.filter(item => {
+                const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
+                return dept.toUpperCase() === 'GOV';
+            }).sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
+
+            let pnpBase = 0, pnpInc = 0, pnpTotalWk = 0, pnpPaidWk = 0;
+            pnpTbody.innerHTML = pnpList.length ? pnpList.map(s => {
+                const b = parseCurrency(s.salary || s.baseSalary);
+                const w = parseCurrency(s.weekly || s.weeklySalary);
+                const i = parseCurrency(s.incentives);
+                const tw = parseCurrency(s.totalWk || s.totalPerWeek);
+                const rawKey = s.badge_id || s.badgeId || s.id || '';
+                const keyEscaped = escapeHTML(rawKey);
+                const jsKey = escapeJsArg(rawKey);
+                const statusVal = (s.status || 'unpaid').toLowerCase();
+
+                pnpBase += b;
+                pnpInc += i;
+                pnpTotalWk += tw;
+
+                if (statusVal === 'paid') {
+                    pnpPaidWk += tw;
+                }
+
+                const isPaid = statusVal === 'paid';
+                const isInactive = statusVal === 'inactive';
+                const isUnpaid = !isPaid && !isInactive;
+                const dropdownClass = isPaid ? 'paid' : (isInactive ? 'inactive' : 'unpaid');
+
+                return `
+                    <tr>
+                        <td><code>${keyEscaped}</code></td>
+                        <td><strong>${escapeHTML(s.title)}</strong></td>
+                        <td>${escapeHTML(s.name)}</td>
+                        <td>${formatCurrency(b)}</td>
+                        <td>${formatCurrency(w)}</td>
+                        <td>${formatCurrency(i)}</td>
+                        <td><strong>${formatCurrency(tw)}</strong></td>
+                        <td>
+                            <select class="status-dropdown ${dropdownClass}" onchange="updateSalaryStatus(this, '${jsKey}', this.value)">
+                                <option value="unpaid" ${isUnpaid ? 'selected' : ''}>No Salary / Unpaid</option>
+                                <option value="paid" ${isPaid ? 'selected' : ''}>Mark as Paid</option>
+                                <option value="inactive" ${isInactive ? 'selected' : ''}>Mark as Inactive (IA)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-danger" onclick="deleteSalaryRecord('${jsKey}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="9">No salary records found.</td></tr>';
+
+            const pnpUnpaidWk = Math.max(0, pnpTotalWk - pnpPaidWk);
+            document.getElementById('pnp-sum-total-wk').innerText = formatCurrency(pnpTotalWk);
+            document.getElementById('pnp-sum-paid').innerText = formatCurrency(pnpPaidWk);
+            document.getElementById('pnp-sum-unpaid').innerText = formatCurrency(pnpUnpaidWk);
+
+            let govBase = 0, govInc = 0, govTotalWk = 0, govPaidWk = 0;
+            govTbody.innerHTML = govList.length ? govList.map(s => {
+                const b = parseCurrency(s.salary || s.baseSalary);
+                const w = parseCurrency(s.weekly || s.weeklySalary);
+                const i = parseCurrency(s.incentives);
+                const tw = parseCurrency(s.totalWk || s.totalPerWeek);
+                const rawKey = s.badge_id || s.badgeId || s.id || '';
+                const keyEscaped = escapeHTML(rawKey);
+                const jsKey = escapeJsArg(rawKey);
+                const statusVal = (s.status || 'unpaid').toLowerCase();
+
+                govBase += b;
+                govInc += i;
+                govTotalWk += tw;
+
+                if (statusVal === 'paid') {
+                    govPaidWk += tw;
+                }
+
+                const isPaid = statusVal === 'paid';
+                const isInactive = statusVal === 'inactive';
+                const isUnpaid = !isPaid && !isInactive;
+                const dropdownClass = isPaid ? 'paid' : (isInactive ? 'inactive' : 'unpaid');
+
+                return `
+                    <tr>
+                        <td><code>${keyEscaped}</code></td>
+                        <td><strong>${escapeHTML(s.title)}</strong></td>
+                        <td>${escapeHTML(s.name)}</td>
+                        <td>${formatCurrency(b)}</td>
+                        <td>${formatCurrency(w)}</td>
+                        <td>${formatCurrency(i)}</td>
+                        <td><strong>${formatCurrency(tw)}</strong></td>
+                        <td>
+                            <select class="status-dropdown ${dropdownClass}" onchange="updateSalaryStatus(this, '${jsKey}', this.value)">
+                                <option value="unpaid" ${isUnpaid ? 'selected' : ''}>No Salary / Unpaid</option>
+                                <option value="paid" ${isPaid ? 'selected' : ''}>Mark as Paid</option>
+                                <option value="inactive" ${isInactive ? 'selected' : ''}>Mark as Inactive (IA)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-danger" onclick="deleteSalaryRecord('${jsKey}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="9">No salary records found.</td></tr>';
+
+            const govUnpaidWk = Math.max(0, govTotalWk - govPaidWk);
+            document.getElementById('gov-sum-total-wk').innerText = formatCurrency(govTotalWk);
+            document.getElementById('gov-sum-paid').innerText = formatCurrency(govPaidWk);
+            document.getElementById('gov-sum-unpaid').innerText = formatCurrency(govUnpaidWk);
+
+            const grandGross = pnpTotalWk + govTotalWk;
+            const grandPaid = pnpPaidWk + govPaidWk;
+            const grandUnpaid = Math.max(0, grandGross - grandPaid);
+
+            document.getElementById('grand-gross-total').innerText = formatCurrency(grandGross);
+            document.getElementById('grand-paid-total').innerText = formatCurrency(grandPaid);
+            document.getElementById('grand-unpaid-total').innerText = formatCurrency(grandUnpaid);
+
+            if (currentSalarySubView === 'PNP') {
+                document.getElementById('stat-lbl-base').innerText = 'Base Salary (PNP)';
+                document.getElementById('stat-lbl-inc').innerText = 'Incentives (PNP)';
+                document.getElementById('stat-lbl-weekly').innerText = 'Remaining Unpaid (PNP)';
+                document.getElementById('stat-total-base').innerText = formatCurrency(pnpBase);
+                document.getElementById('stat-total-incentives').innerText = formatCurrency(pnpInc);
+                document.getElementById('stat-total-weekly').innerText = formatCurrency(pnpUnpaidWk);
+            } else if (currentSalarySubView === 'GOV') {
+                document.getElementById('stat-lbl-base').innerText = 'Base Salary (Gov)';
+                document.getElementById('stat-lbl-inc').innerText = 'Incentives (Gov)';
+                document.getElementById('stat-lbl-weekly').innerText = 'Remaining Unpaid (Gov)';
+                document.getElementById('stat-total-base').innerText = formatCurrency(govBase);
+                document.getElementById('stat-total-incentives').innerText = formatCurrency(govInc);
+                document.getElementById('stat-total-weekly').innerText = formatCurrency(govUnpaidWk);
+            } else {
+                document.getElementById('stat-lbl-base').innerText = 'Base Salary (Combined)';
+                document.getElementById('stat-lbl-inc').innerText = 'Incentives (Combined)';
+                document.getElementById('stat-lbl-weekly').innerText = 'Remaining Unpaid (Combined)';
+                document.getElementById('stat-total-base').innerText = formatCurrency(pnpBase + govBase);
+                document.getElementById('stat-total-incentives').innerText = formatCurrency(pnpInc + govInc);
+                document.getElementById('stat-total-weekly').innerText = formatCurrency(grandUnpaid);
+            }
+        }
+
+        async function handleSaveSalary(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-salary');
+            const msgDiv = document.getElementById('sal-status-msg');
+
+            const dept = document.getElementById('sal-dept').value;
+            const title = document.getElementById('sal-title').value.trim();
+            const name = document.getElementById('sal-name').value.trim();
+            const badgeId = document.getElementById('sal-badge').value.trim();
+            const baseSalary = parseFloat(document.getElementById('sal-base').value) || 0;
+            const incentives = parseFloat(document.getElementById('sal-incentives').value) || 0;
+
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Saving salary entry...';
+            btn.disabled = true;
+
+            try {
+                const res = await apiFetch('/api/salary/save', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        department: dept,
+                        title: title,
+                        name: name,
+                        badgeId: badgeId,
+                        baseSalary: baseSalary,
+                        incentives: incentives,
+                        status: 'unpaid'
+                    })
+                });
+
+                const result = await res.json();
+                if (res.ok && result.status === 'success') {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = '✅ Salary record saved successfully!';
+                    document.getElementById('form-salary').reset();
+
+                    const deptSelect = document.getElementById('sal-dept');
+                    if (currentSalarySubView === 'PNP') {
+                        deptSelect.value = 'PNP';
+                        deptSelect.disabled = true;
+                    } else if (currentSalarySubView === 'GOV') {
+                        deptSelect.value = 'GOV';
+                        deptSelect.disabled = true;
+                    }
+
+                    loadSalaryPersonnelDropdown();
+                    fetchSalaryData();
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized action'}`;
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Failed to connect to server.';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('staffToken');
+            const headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            const headers = getAuthHeaders();
+            options.headers = { ...headers, ...(options.headers || {}) };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                
+                if ((response.status === 401 || response.status === 403) && endpoint !== '/api/login' && endpoint !== '/api/register') {
+                    const cloned = response.clone();
+                    const data = await cloned.json().catch(() => ({}));
+                    
+                    if (data.message && data.message.includes("Super Admin access required")) {
+                        return response;
+                    }
+
+                    if (data.message && (data.message.includes("Invalid token") || data.message.includes("Unauthorized"))) {
+                        localStorage.clear();
+                        checkAuthState();
+                        alert("Session expired or invalid. Please sign in again.");
+                    }
+                }
+                return response;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        function checkAuthState() {
+            const token = localStorage.getItem('staffToken');
+            const authScreen = document.getElementById('auth-screen');
+            const appContainer = document.getElementById('app-container');
+
+            if (token) {
+                authScreen.style.display = 'none';
+                appContainer.style.display = 'flex';
+                initChartIfNeeded();
+                applyRolePermissions();
+                fetchDashboardData();
+                fetchCadData();
+                setSalarySubView('ALL');
+                fetchSalaryData();
+                fetchTreasuryData();
+                if (!dashboardInterval) {
+                    dashboardInterval = setInterval(() => {
+                        fetchDashboardData();
+                        fetchCadData();
+                    }, 4000);
+                }
+            } else {
+                authScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+                if (dashboardInterval) {
+                    clearInterval(dashboardInterval);
+                    dashboardInterval = null;
+                }
+            }
+        }
+
+        function switchAuthTab(tab) {
+            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+            document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+            
+            const msg = document.getElementById('auth-status-msg');
+            msg.innerText = '';
+            msg.style.color = '';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            const msg = document.getElementById('auth-status-msg');
+
+            msg.style.color = '#60a5fa';
+            msg.innerText = '⏳ Authenticating...';
+
+            try {
+                const res = await apiFetch('/api/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: u, password: p })
+                });
+
+                const data = await res.json();
+
+                if (data.message && data.message.includes("API Server is Running")) {
+                    msg.style.color = '#ef4444';
+                    msg.innerText = '❌ API Route Error: Server misrouted endpoint to root.';
+                    return;
+                }
+
+                if (res.ok && (data.status === 'success' || data.success || !data.status || data.status === 'ok')) {
+                    localStorage.setItem('staffToken', data.token);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('userDept', data.department);
+                    localStorage.setItem('userStatus', data.accountStatus);
+
+                    msg.style.color = '#10b981';
+                    msg.innerText = '✅ Authenticated successfully!';
+                    setTimeout(() => {
+                        checkAuthState();
+                    }, 500);
+                } else {
+                    msg.style.color = '#ef4444';
+                    msg.innerText = `❌ ${escapeHTML(data.message) || 'Login failed.'}`;
+                }
+            } catch (err) {
+                msg.style.color = '#ef4444';
+                msg.innerText = '❌ Connection error.';
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.querySelector('#form-register button[type="submit"]');
+            const u = document.getElementById('reg-username').value.trim();
+            const p = document.getElementById('reg-password').value.trim();
+            const b = document.getElementById('reg-badge').value.trim().toUpperCase();
+            const msg = document.getElementById('auth-status-msg');
+
+            msg.style.color = '#60a5fa';
+            msg.innerText = '⏳ Submitting application...';
+            if (btn) btn.disabled = true;
+
+            try {
+                const res = await apiFetch('/api/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        username: u, 
+                        password: p, 
+                        badgeId: b,
+                        badge_id: b 
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.message && data.message.includes("API Server is Running")) {
+                    msg.style.color = '#ef4444';
+                    msg.innerText = '❌ API Route Error: Server misrouted endpoint to root.';
+                    return;
+                }
+
+                if (res.ok && (data.status === 'success' || data.success || !data.status || data.status === 'ok')) {
+                    msg.style.color = '#10b981';
+                    msg.innerText = `✅ ${escapeHTML(data.message) || 'Registered successfully! Redirecting to login...'}`;
+                    
+                    setTimeout(() => {
+                        switchAuthTab('login');
+                        document.getElementById('login-username').value = u;
+                        document.getElementById('login-password').value = p;
+                        msg.innerText = '';
+                    }, 1500);
+                } else {
+                    msg.style.color = '#ef4444';
+                    msg.innerText = `❌ ${escapeHTML(data.message) || 'Registration failed.'}`;
+                }
+            } catch (err) {
+                console.error("Registration error:", err);
+                msg.style.color = '#ef4444';
+                msg.innerText = '❌ Connection error. Ensure backend server is running.';
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            checkAuthState();
+        }
+
+        function isPnpAdminOrSuperAdmin() {
+            const role = (localStorage.getItem('userRole') || 'GUEST').toUpperCase();
+            const dept = (localStorage.getItem('userDept') || 'NONE').toUpperCase();
+            const status = (localStorage.getItem('userStatus') || 'NONE').toUpperCase();
+            if (role === 'SUPER_ADMIN' && status === 'APPROVED') return true;
+            return role === 'ADMIN' && dept === 'PNP' && status === 'APPROVED';
+        }
+
+        function isGovAdminOrSuperAdmin() {
+            const role = (localStorage.getItem('userRole') || 'GUEST').toUpperCase();
+            const dept = (localStorage.getItem('userDept') || 'NONE').toUpperCase();
+            const status = (localStorage.getItem('userStatus') || 'NONE').toUpperCase();
+            if (role === 'SUPER_ADMIN' && status === 'APPROVED') return true;
+            return role === 'ADMIN' && dept === 'GOV' && status === 'APPROVED';
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('view-' + viewName).classList.add('active');
+            if (document.getElementById('nav-' + viewName)) {
+                document.getElementById('nav-' + viewName).classList.add('active');
+            }
+
+            if (viewName === 'dashboard') fetchDashboardData();
+            if (viewName === 'cad') fetchCadData();
+            if (viewName === 'officers') fetchOfficersData();
+            if (viewName === 'government') fetchGovData();
+            if (viewName === 'certificates') {
+                loadCertificates();
+                loadPersonnelCheckboxes();
+            }
+            if (viewName === 'salary') {
+                setSalarySubView(currentSalarySubView || 'ALL');
+                fetchSalaryData();
+                fetchTreasuryData();
+            }
+            if (viewName === 'users') loadUserManagementTable();
+
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('active')) {
+                toggleMobileSidebar();
+            }
+        }
+
+        function applyRolePermissions() {
+            const role = (localStorage.getItem('userRole') || 'GUEST').toUpperCase();
+            const dept = (localStorage.getItem('userDept') || 'NONE').toUpperCase();
+            const status = (localStorage.getItem('userStatus') || 'NONE').toUpperCase();
+            const username = localStorage.getItem('username') || 'User';
+
+            document.getElementById('display-username').innerText = username;
+            document.getElementById('display-role').innerText = `${role} (${dept})`;
+
+            document.getElementById('nav-users').style.display = 'none';
+            document.getElementById('nav-cad').style.display = 'flex';
+            document.getElementById('nav-officers').style.display = 'flex';
+            document.getElementById('nav-government').style.display = 'flex';
+
+            document.getElementById('card-add-officer').style.display = 'none';
+            document.getElementById('card-add-gov').style.display = 'none';
+            document.getElementById('card-generate-cert').style.display = 'none';
+
+            const webhookBtn = document.getElementById('btn-webhook-unpaid');
+            const treasuryCard = document.getElementById('card-treasury-control');
+            
+            if (webhookBtn) webhookBtn.style.display = 'none';
+            if (treasuryCard) treasuryCard.style.display = 'none';
+
+            if (status !== 'APPROVED' && role !== 'SUPER_ADMIN') {
+                return;
+            }
+
+            if (role === 'SUPER_ADMIN') {
+                document.getElementById('nav-users').style.display = 'flex';
+                document.getElementById('card-add-officer').style.display = 'block';
+                document.getElementById('card-add-gov').style.display = 'block';
+                document.getElementById('card-generate-cert').style.display = 'block';
+                if (webhookBtn) webhookBtn.style.display = 'inline-block';
+                if (treasuryCard) treasuryCard.style.display = 'block';
+                return;
+            }
+
+            if (role === 'ADMIN') {
+                if (webhookBtn) webhookBtn.style.display = 'inline-block';
+                if (treasuryCard) treasuryCard.style.display = 'block';
+                if (dept === 'GOV') {
+                    document.getElementById('nav-officers').style.display = 'none';
+                    document.getElementById('card-add-gov').style.display = 'block';
+                    document.getElementById('card-generate-cert').style.display = 'block';
+                } else if (dept === 'PNP') {
+                    document.getElementById('nav-government').style.display = 'none';
+                    document.getElementById('card-add-officer').style.display = 'block';
+                    document.getElementById('card-generate-cert').style.display = 'block';
+                }
+            } else if (role === 'MEMBER') {
+                if (dept === 'GOV') document.getElementById('nav-officers').style.display = 'none';
+                if (dept === 'PNP') document.getElementById('nav-government').style.display = 'none';
+            }
+        }
+
+        async function loadUserManagementTable() {
+            const tbody = document.getElementById('user-management-table-body');
+            try {
+                const res = await apiFetch('/api/admin/pending-users');
+                if (res.ok) {
+                    const rawData = await res.json();
+                    
+                    const users = Array.isArray(rawData) ? rawData : (rawData.users || rawData.data || []);
+
+                    if (!users.length) {
+                        tbody.innerHTML = '<tr><td colspan="6">No registered accounts found.</td></tr>';
+                        return;
+                    }
+
+                    users.sort((a, b) => compareIDs(a.badgeId || a.badge_id, b.badgeId || b.badge_id));
+
+                    tbody.innerHTML = users.map(u => {
+                        const safeUserId = escapeJsArg(u.id || u._id || u.userId);
+                        const badgeNo = u.badgeId || u.badge_id || u.badge || 'N/A';
+                        const department = u.department || u.dept || 'N/A';
+                        const role = u.role || u.userRole || 'MEMBER';
+                        const accountStatus = u.status || u.accountStatus || 'PENDING';
+
+                        return `
+                            <tr>
+                                <td><strong>${escapeHTML(u.username)}</strong></td>
+                                <td><code>${escapeHTML(badgeNo)}</code></td>
+                                <td>${escapeHTML(department)}</td>
+                                <td>${escapeHTML(role)}</td>
+                                <td><span class="badge-ref">${escapeHTML(accountStatus)}</span></td>
+                                <td>
+                                    <div class="action-cell">
+                                        <button class="btn-success" onclick="updateAccountRole('${safeUserId}', 'ADMIN', 'APPROVED')">Make Admin</button>
+                                        <button class="btn-primary" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'APPROVED')">Approve Member</button>
+                                        <button class="btn-warning" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'REJECTED')">Reject</button>
+                                        <button class="btn-danger" onclick="deleteUserAccount('${safeUserId}')">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;">Failed to fetch users. Super Admin access required.</td></tr>';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;">Failed to fetch users. Connection error or invalid response.</td></tr>';
+            }
+        }
+
+        async function updateAccountRole(userId, role, status) {
+            try {
+                const res = await apiFetch('/api/admin/update-user', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId: String(userId), role, status })
+                });
+
+                if (res.ok) {
+                    loadUserManagementTable();
+                } else {
+                    const data = await res.json();
+                    alert(`Failed to update account permissions: ${data.message || 'Error'}`);
+                }
+            } catch (e) {
+                alert('Connection error while updating user.');
+            }
+        }
+
+        async function deleteUserAccount(userId) {
+            if (!confirm("Are you sure you want to permanently delete this user account?")) return;
+
+            try {
+                const res = await apiFetch('/api/admin/delete-user', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId: String(userId) })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    loadUserManagementTable();
+                } else {
+                    alert(`❌ Failed to delete account: ${data.message || 'Unauthorized'}`);
+                }
+            } catch (e) {
+                alert('❌ Network error while deleting user account.');
+            }
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const statsRes = await apiFetch('/api/stats');
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    document.getElementById('total-officers').innerText = stats.total_officers;
+                    document.getElementById('total-gov').innerText = stats.total_gov_members;
+                    if (dutyChart) {
+                        dutyChart.data.datasets[0].data = [stats.total_officers, stats.total_gov_members];
+                        dutyChart.update();
+                    }
+                }
+
+                const pnpRes = await apiFetch('/api/activity/pnp');
+                if (pnpRes.ok) {
+                    const logs = await pnpRes.json();
+                    const tbody = document.getElementById('pnp-activity-body');
+                    tbody.innerHTML = logs.length ? logs.map(item => `<tr><td>${escapeHTML(item.id)}</td><td class="wrap-text">${escapeHTML(item.action)}</td><td class="wrap-text">${escapeHTML(item.user)}</td></tr>`).join('') : '<tr><td colspan="3">No PNP activity.</td></tr>';
+                }
+
+                const govRes = await apiFetch('/api/activity/gov');
+                if (govRes.ok) {
+                    const logs = await govRes.json();
+                    const tbody = document.getElementById('gov-activity-body');
+                    tbody.innerHTML = logs.length ? logs.map(item => `<tr><td>${escapeHTML(item.id)}</td><td class="wrap-text">${escapeHTML(item.action)}</td><td class="wrap-text">${escapeHTML(item.user)}</td></tr>`).join('') : '<tr><td colspan="3">No GOV activity.</td></tr>';
+                }
+
+            } catch (e) {
+                console.error("Dashboard fetch error:", e);
+            }
+        }
+
+        async function fetchOfficersData() {
+            try {
+                const res = await apiFetch('/api/officers');
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.getElementById('officers-table-body');
+                    const canManage = isPnpAdminOrSuperAdmin();
+
+                    if (!data.length) {
+                        tbody.innerHTML = `<tr><td colspan="${canManage ? 5 : 4}">No officers found.</td></tr>`;
+                        return;
+                    }
+
+                    data.sort((a, b) => compareIDs(a.badge, b.badge));
+
+                    tbody.innerHTML = data.map(item => {
+                        const jsBadge = escapeJsArg(item.badge);
+                        const jsRank = escapeJsArg(item.rank);
+                        return `
+                            <tr>
+                                <td><code>${escapeHTML(item.badge)}</code></td>
+                                <td><strong>${escapeHTML(item.name || 'N/A')}</strong></td>
+                                <td>${escapeHTML(item.rank)}</td>
+                                <td>${escapeHTML(item.points)} pts</td>
+                                ${canManage ? `
+                                    <td>
+                                        <div class="action-cell">
+                                            <button class="btn-warning" onclick="handlePromoteOfficer('${jsBadge}', '${jsRank}')">Promote</button>
+                                            <button class="btn-danger" onclick="handleDeleteOfficer('${jsBadge}')">Delete</button>
+                                        </div>
+                                    </td>` : '<td><span style="color:var(--text-muted); font-size:0.8rem;">Read Only</span></td>'}
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                document.getElementById('officers-table-body').innerHTML = '<tr><td colspan="5" style="color:#ef4444;">Failed to load PNP officers.</td></tr>';
+            }
+        }
+
+        async function handleDeleteOfficer(badge) {
+            if (!confirm(`Are you sure you want to permanently delete officer ${badge}?`)) return;
+
+            try {
+                const res = await apiFetch('/api/officers/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ badge: String(badge) })
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && (data.status === 'success' || data.success)) {
+                    alert('✅ Officer deleted successfully!');
+                    fetchOfficersData();
+                    fetchDashboardData();
+                } else {
+                    alert(`❌ Failed to delete officer: ${data.message || 'Unauthorized'}`);
+                }
+            } catch (e) {
+                alert('❌ Network error while deleting officer.');
+            }
+        }
+
+        async function handlePromoteOfficer(badge, currentRank) {
+            const newRank = prompt(`Promote/Reassign Officer (${badge})\nCurrent Rank: ${currentRank}\n\nEnter New Rank (e.g. Police Lieutenant):`, currentRank);
+            if (!newRank || newRank.trim() === '' || newRank.trim() === currentRank) return;
+
+            try {
+                const res = await apiFetch('/api/officers/promote', {
+                    method: 'POST',
+                    body: JSON.stringify({ badge: badge, newRank: newRank.trim() })
+                });
+                const result = await res.json();
+                if (res.ok && result.status === 'success') {
+                    alert(`✅ Officer promoted successfully!\nNew Badge Serial No: ${result.newBadge}`);
+                    fetchOfficersData();
+                    fetchDashboardData();
+                } else {
+                    alert(`❌ Promotion failed: ${result.message || 'Unauthorized'}`);
+                }
+            } catch (err) {
+                alert('❌ Network error while promoting officer.');
+            }
+        }
+
+        async function fetchGovData() {
+            try {
+                const res = await apiFetch('/api/government');
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.getElementById('gov-table-body');
+                    const canManage = isGovAdminOrSuperAdmin();
+
+                    if (!data.length) {
+                        tbody.innerHTML = `<tr><td colspan="${canManage ? 5 : 4}">No government staff found.</td></tr>`;
+                        return;
+                    }
+
+                    data.sort((a, b) => compareIDs(a.id, b.id));
+
+                    tbody.innerHTML = data.map(item => {
+                        const jsId = escapeJsArg(item.id);
+                        return `
+                            <tr>
+                                <td><code>${escapeHTML(item.id)}</code></td>
+                                <td><strong>${escapeHTML(item.name || 'N/A')}</strong></td>
+                                <td>${escapeHTML(item.position)}</td>
+                                <td>${escapeHTML(item.points)} pts</td>
+                                ${canManage ? `
+                                    <td>
+                                        <div class="action-cell">
+                                            <button class="btn-danger" onclick="handleDeleteGov('${jsId}')">Delete</button>
+                                        </div>
+                                    </td>` : '<td><span style="color:var(--text-muted); font-size:0.8rem;">Read Only</span></td>'}
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                document.getElementById('gov-table-body').innerHTML = '<tr><td colspan="5" style="color:#ef4444;">Failed to load Government personnel.</td></tr>';
+            }
+        }
+
+        async function handleDeleteGov(id) {
+            if (!confirm(`Are you sure you want to permanently delete government personnel ID ${id}?`)) return;
+
+            try {
+                const res = await apiFetch('/api/government/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ id: String(id) })
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && (data.status === 'success' || data.success)) {
+                    alert('✅ Government personnel deleted successfully!');
+                    fetchGovData();
+                    fetchDashboardData();
+                } else {
+                    alert(`❌ Failed to delete personnel: ${data.message || 'Unauthorized'}`);
+                }
+            } catch (e) {
+                alert('❌ Network error while deleting government personnel.');
+            }
+        }
+
+        async function handleAddOfficer(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('add-officer-name');
+            const rankSelect = document.getElementById('add-officer-rank');
+            const msgDiv = document.getElementById('add-officer-msg');
+
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Enlisting officer...';
+
+            try {
+                const res = await apiFetch('/api/officers/add', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: nameInput.value.trim(),
+                        rank: rankSelect.value
+                    })
+                });
+                const result = await res.json();
+                if (res.ok && result.status === 'success') {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = `✅ Enlisted successfully with Badge No: ${result.badge}`;
+                    nameInput.value = '';
+                    fetchOfficersData();
+                    fetchDashboardData();
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized'}`;
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Failed to connect to server.';
+            }
+        }
+
+        async function handleAddGov(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('add-gov-name');
+            const posInput = document.getElementById('add-gov-pos');
+            const msgDiv = document.getElementById('add-gov-msg');
+
+            msgDiv.style.color = '#60a5fa';
+            msgDiv.innerText = '⏳ Registering government member...';
+
+            try {
+                const res = await apiFetch('/api/government/add', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: nameInput.value.trim(), position: posInput.value.trim() })
+                });
+                const result = await res.json();
+                if (res.ok && result.status === 'success') {
+                    msgDiv.style.color = '#10b981';
+                    msgDiv.innerText = `✅ Registered successfully with ID No: ${result.id}`;
+                    nameInput.value = '';
+                    posInput.value = '';
+                    fetchGovData();
+                    fetchDashboardData();
+                } else {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized'}`;
+                }
+            } catch (err) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Failed to connect to server.';
+            }
+        }
+
+        async function loadCertificates() {
+            try {
+                const res = await apiFetch('/api/certificates');
+                if (res.ok) {
+                    certificatesCache = await res.json();
+                    renderCertificatesTable(certificatesCache);
+                }
+            } catch (e) {
+                document.getElementById('cert-registry-body').innerHTML = '<tr><td colspan="5" style="color:#ef4444;">Failed to load certificates.</td></tr>';
+            }
+        }
+
+        function renderCertificatesTable(data) {
+            const tbody = document.getElementById('cert-registry-body');
+            if (!data || !data.length) {
+                tbody.innerHTML = '<tr><td colspan="5">No certificate records found.</td></tr>';
+                return;
+            }
+
+            const sortedData = [...data].sort((a, b) => compareIDs(a.id_or_badge || a.ref_code, b.id_or_badge || b.ref_code));
+
+            tbody.innerHTML = sortedData.map(cert => `
+                <tr>
+                    <td><span class="badge-ref">${escapeHTML(cert.ref_code)}</span></td>
+                    <td class="wrap-text"><strong>${escapeHTML(cert.personnel_name)}</strong></td>
+                    <td><code>${escapeHTML(cert.id_or_badge)}</code></td>
+                    <td class="wrap-text">${escapeHTML(cert.template_type)}</td>
+                    <td>${escapeHTML(cert.issued_date)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterCertificates() {
+            const q = document.getElementById('cert-search').value.toLowerCase().trim();
+            const filtered = certificatesCache.filter(c =>
+                (c.ref_code && String(c.ref_code).toLowerCase().includes(q)) ||
+                (c.personnel_name && String(c.personnel_name).toLowerCase().includes(q)) ||
+                (c.id_or_badge && String(c.id_or_badge).toLowerCase().includes(q))
+            );
+            renderCertificatesTable(filtered);
+        }
+
+        async function loadPersonnelCheckboxes() {
+            const template = document.getElementById('cert-template').value;
+            const isGov = template.startsWith('Gov Office');
+            const endpoint = isGov ? '/api/government' : '/api/officers';
+            const container = document.getElementById('cert-personnel-checkboxes');
+
+            container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">Loading personnel...</span>';
+
+            try {
+                const res = await apiFetch(endpoint);
+                if (res.ok) {
+                    currentPersonnelList = await res.json();
+
+                    currentPersonnelList.sort((a, b) => {
+                        const idA = isGov ? (a.id || '') : (a.badge || '');
+                        const idB = isGov ? (b.id || '') : (b.badge || '');
+                        return compareIDs(idA, idB);
+                    });
+
+                    container.innerHTML = '';
+                    
+                    if (currentPersonnelList.length === 0) {
+                        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">No personnel records found.</span>';
+                        return;
+                    }
+
+                    currentPersonnelList.forEach((person, index) => {
+                        const idOrBadge = escapeHTML(isGov ? person.id : person.badge);
+                        const titleOrRank = escapeHTML(isGov ? person.position : person.rank);
+                        const personName = escapeHTML(person.name || 'Unnamed Personnel');
+                        
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'checkbox-item';
+                        itemDiv.innerHTML = `
+                            <input type="checkbox" id="person-cb-${index}" class="person-checkbox" value="${index}" onchange="onPersonnelSelect()" />
+                            <label for="person-cb-${index}">
+                                <strong>[${idOrBadge}]</strong> ${personName} <span style="color: var(--text-muted);">(${titleOrRank})</span>
+                            </label>
+                        `;
+                        container.appendChild(itemDiv);
+                    });
+                }
+            } catch (e) {
+                container.innerHTML = '<span style="color: #ef4444; font-size: 0.85rem;">❌ Failed to load personnel</span>';
+            }
+        }
+
+        function onTemplateChange() {
+            const template = document.getElementById('cert-template').value;
+            const isGov = template.startsWith('Gov Office');
+            document.getElementById('lbl-rank').innerText = isGov ? 'Position / Title' : 'Rank';
+            document.getElementById('lbl-id').innerText = isGov ? 'ID Serial No' : 'Badge Serial No';
+            
+            document.getElementById('cert-name').value = '';
+            document.getElementById('cert-title').value = '';
+            document.getElementById('cert-id').value = '';
+
+            loadPersonnelCheckboxes();
+        }
+
+        function onPersonnelSelect() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.person-checkbox:checked'));
+
+            if (checkedBoxes.length === 0) {
+                document.getElementById('cert-name').value = '';
+                document.getElementById('cert-title').value = '';
+                document.getElementById('cert-id').value = '';
+                return;
+            }
+
+            if (checkedBoxes.length > 1) {
+                document.getElementById('cert-name').value = `[Batch Mode: ${checkedBoxes.length} Personnel Selected]`;
+                document.getElementById('cert-title').value = `[Multiple Ranks/Titles]`;
+                document.getElementById('cert-id').value = `[Multiple Badge/IDs]`;
+                return;
+            }
+
+            const person = currentPersonnelList[checkedBoxes[0].value];
+            if (!person) return;
+
+            const isGov = document.getElementById('cert-template').value.startsWith('Gov Office');
+
+            const idVal = isGov ? person.id : person.badge;
+            const titleVal = isGov ? person.position : person.rank;
+
+            document.getElementById('cert-id').value = idVal || '';
+            document.getElementById('cert-title').value = titleVal || '';
+            document.getElementById('cert-name').value = person.name ? person.name : titleVal;
+        }
+
+        async function handleGenerateCertificate(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-generate-cert');
+            const statusDiv = document.getElementById('cert-status-msg');
+            const checkedBoxes = Array.from(document.querySelectorAll('.person-checkbox:checked'));
+
+            if (checkedBoxes.length === 0) {
+                statusDiv.style.color = '#ef4444';
+                statusDiv.innerText = '❌ Please select at least one personnel member from the list.';
+                return;
+            }
+
+            const reason = document.getElementById('cert-reason').value.trim();
+            const template = document.getElementById('cert-template').value;
+            const isGov = template.startsWith('Gov Office');
+
+            const isSingleMode = checkedBoxes.length === 1;
+            const customName = document.getElementById('cert-name').value.trim();
+            const customTitle = document.getElementById('cert-title').value.trim();
+            const customId = document.getElementById('cert-id').value.trim();
+
+            btn.disabled = true;
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < checkedBoxes.length; i++) {
+                const index = checkedBoxes[i].value;
+                const person = currentPersonnelList[index];
+                if (!person) continue;
+
+                const defaultName = person.name ? person.name : (isGov ? person.position : person.rank);
+                const defaultTitle = isGov ? person.position : person.rank;
+                const defaultId = isGov ? person.id : person.badge;
+
+                const pName = (isSingleMode && customName && !customName.startsWith('[Batch')) ? customName : defaultName;
+                const pTitle = (isSingleMode && customTitle && !customTitle.startsWith('[Multiple')) ? customTitle : defaultTitle;
+                const pId = (isSingleMode && customId && !customId.startsWith('[Multiple')) ? customId : defaultId;
+
+                statusDiv.style.color = '#60a5fa';
+                statusDiv.innerText = `⏳ Generating (${i + 1}/${checkedBoxes.length}): ${escapeHTML(pName)}...`;
+
+                const payload = {
+                    template: template,
+                    name: pName,
+                    title: pTitle,
+                    idNo: pId,
+                    reason: reason
+                };
+
+                try {
+                    const res = await apiFetch('/api/certificates/generate', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await res.json();
+                    if (res.ok && result.status === 'success') {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (err) {
+                    failCount++;
+                }
+
+                if (i < checkedBoxes.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+
+            btn.disabled = false;
+            document.getElementById('cert-reason').value = '';
+            loadCertificates();
+
+            if (failCount === 0) {
+                statusDiv.style.color = '#10b981';
+                statusDiv.innerText = `✅ Successfully issued ${successCount} certificate(s)!`;
+            } else {
+                statusDiv.style.color = '#f59e0b';
+                statusDiv.innerText = `⚠️ Issued ${successCount} certificate(s), but ${failCount} failed.`;
+            }
+        }
+
+        checkAuthState();
+    </script>
+</body>
+</html>
