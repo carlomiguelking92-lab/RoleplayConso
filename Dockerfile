@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
-COPY ROLEPLAY.jar app.jar
+COPY Desktop.jar app.jar
 COPY dashbord.html ./
 COPY *.png ./
 EXPOSE 8080
