@@ -373,8 +373,8 @@
                 </div>
                 <div class="form-group" style="margin-top: 8px;">
                     <label for="reg-badge">Badge / ID Serial No</label>
-                    <input type="text" id="reg-badge" class="form-control" placeholder="e.g. GO-0001, 09-1012, or O-1012" required />
-                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">GO = GOV Dept | 09- (NCO) or O- / O09- (CO) = PNP Dept</small>
+                    <input type="text" id="reg-badge" class="form-control" placeholder="e.g. GO-0001, 09-1012, or O09-1012" required />
+                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 2px;">GO = GOV Dept | 09- or O09- = PNP Dept</small>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-top: 16px;">Submit Application</button>
             </form>
@@ -403,7 +403,6 @@
                 </div>
                 <ul class="nav-list">
                     <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')"><a><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-                    <li class="nav-item" id="nav-cad" onclick="switchView('cad')"><a><i class="fa-solid fa-truck-medical"></i> CAD Dispatch</a></li>
                     <li class="nav-item" id="nav-officers" onclick="switchView('officers')"><a><i class="fa-solid fa-user-shield"></i> Officers</a></li>
                     <li class="nav-item" id="nav-government" onclick="switchView('government')"><a><i class="fa-solid fa-landmark"></i> Government</a></li>
                     <li class="nav-item" id="nav-certificates" onclick="switchView('certificates')"><a><i class="fa-solid fa-award"></i> Certificates</a></li>
@@ -422,12 +421,11 @@
         </div>
 
         <div class="main-content">
-            <!-- MAIN DASHBOARD VIEW -->
             <div id="view-dashboard" class="view-section active">
                 <div class="header">
                     <div>
                         <h1>Performance Dashboard</h1>
-                        <p>Region IX Personnel Overview & Live Activity Feed</p>
+                        <p>Region IX Activity Tracker</p>
                     </div>
                 </div>
 
@@ -484,82 +482,6 @@
                 </div>
             </div>
 
-            <!-- SEPARATE DEDICATED CAD / MDT DISPATCH VIEW -->
-            <div id="view-cad" class="view-section">
-                <div class="header">
-                    <div>
-                        <h1>CAD / MDT Dispatch Center</h1>
-                        <p>Live Unit Tracking, Active Incident Calls & Radio Codes</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-grid">
-                    <div class="card" style="border: 1px solid var(--accent-blue);">
-                        <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-truck-medical"></i> CAD / MDT Live Dispatch Monitor</h3>
-                        <div class="activity-split-grid">
-                            <div>
-                                <h4 style="color: var(--accent-blue); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-shield-halved"></i> Active Duty PNP Units</h4>
-                                <div class="table-responsive">
-                                    <table>
-                                        <thead>
-                                            <tr><th>Unit / Badge</th><th>Status</th><th>Assigned Call</th></tr>
-                                        </thead>
-                                        <tbody id="cad-units-body">
-                                            <tr><td colspan="3">Connecting to CAD API...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 style="color: var(--accent-red); margin-bottom: 8px; font-size: 0.92rem;"><i class="fa-solid fa-triangle-exclamation"></i> Active Emergency Calls</h4>
-                                <div class="table-responsive">
-                                    <table>
-                                        <thead>
-                                            <tr><th>Call ID</th><th>Title</th><th>Location</th><th>Priority</th></tr>
-                                        </thead>
-                                        <tbody id="cad-calls-body">
-                                            <tr><td colspan="4">Connecting to CAD API...</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <details open>
-                            <summary style="font-size: 1.05rem; font-weight: bold; cursor: pointer; color: var(--accent-gold);">
-                                <i class="fa-solid fa-walkie-talkie"></i> Police Radio Codes Quick Reference (10-Codes)
-                            </summary>
-                            <div style="display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 240px;">
-                                    <h4 style="margin-bottom: 8px; color: var(--accent-blue); font-size: 0.9rem;">10-0 to 10-39 (Status & Inquiries)</h4>
-                                    <ul style="list-style: none; padding-left: 0; font-size: 0.82rem; line-height: 1.8;">
-                                        <li><b>10-4</b> Affirmative | <b>10-6</b> Busy</li>
-                                        <li><b>10-7</b> Out of Service | <b>10-8</b> In Service</li>
-                                        <li><b>10-9</b> Say Again / Repeat | <b>10-10</b> Negative</li>
-                                        <li><b>10-17</b> Enroute | <b>10-20</b> Location</li>
-                                        <li><b>10-23</b> Arrived at Scene | <b>10-26</b> ETA</li>
-                                        <li><b>10-30</b> Danger | <b>10-33</b> Backup Needed</li>
-                                    </ul>
-                                </div>
-                                <div style="flex: 1; min-width: 240px;">
-                                    <h4 style="margin-bottom: 8px; color: var(--accent-red); font-size: 0.9rem;">10-40 to 10-85 (Incidents & Emergencies)</h4>
-                                    <ul style="list-style: none; padding-left: 0; font-size: 0.82rem; line-height: 1.8;">
-                                        <li><b>10-40</b> Fight in Progress | <b>10-43</b> In Pursuit</li>
-                                        <li><b>10-45</b> Bomb Threat | <b>10-46</b> Bank Alarm</li>
-                                        <li><b>10-50</b> Vehicle Accident | <b>10-52</b> Ambulance</li>
-                                        <li><b>10-54</b> Hit & Run | <b>10-65</b> Armed Robbery</li>
-                                        <li><b>10-72</b> In Custody | <b>10-74</b> Prison Break</li>
-                                        <li><b>10-80</b> Fire Alarm | <b>10-82</b> Fire in Progress</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </details>
-                    </div>
-                </div>
-            </div>
-
             <div id="view-officers" class="view-section">
                 <div class="header">
                     <div>
@@ -587,7 +509,7 @@
                                     <option value="Police Chief Master Sergeant">Police Chief Master Sergeant</option>
                                     <option value="Police Executive Master Sergeant">Police Executive Master Sergeant</option>
                                 </optgroup>
-                                <optgroup label="Commissioned Officers (Prefix: O- / O09-)">
+                                <optgroup label="Commissioned Officers (Prefix: O09-)">
                                     <option value="Police Lieutenant">Police Lieutenant</option>
                                     <option value="Police Captain">Police Captain</option>
                                     <option value="Police Major">Police Major</option>
@@ -1007,48 +929,34 @@
         let salaryPersonnelCache = [];
         let currentSalarySubView = 'ALL';
 
+        // Salary grade lookup for auto-filling base salary and incentives
         const SALARY_GRADES = {
-            "Patrolman": { baseSalary: 11999, incentives: 5000 },
-            "Police Corporal": { baseSalary: 13999, incentives: 5000 },
-            "Police Staff Sergeant": { baseSalary: 15999, incentives: 5000 },
-            "Police Master Sergeant": { baseSalary: 17999, incentives: 5000 },
-            "Police Senior Master Sergeant": { baseSalary: 19999, incentives: 5000 },
-            "Police Chief Master Sergeant": { baseSalary: 21999, incentives: 5500 },
-            "Police Executive Master Sergeant": { baseSalary: 24999, incentives: 5000 },
-            "Police Lieutenant": { baseSalary: 29999, incentives: 10000 },
-            "Police Captain": { baseSalary: 34999, incentives: 10000 },
-            "Police Major": { baseSalary: 39999, incentives: 10000 },
-            "Police Lieutenant Colonel": { baseSalary: 44999, incentives: 10000 },
-            "Police Colonel": { baseSalary: 50000, incentives: 10000 },
-            "Police Brigadier General": { baseSalary: 60000, incentives: 10000 },
-            "Police Major General": { baseSalary: 70000, incentives: 10000 },
-            "Police Lieutenant General": { baseSalary: 80000, incentives: 10000 },
-            "Police General": { baseSalary: 100000, incentives: 10000 },
+            // Non-Commissioned PNP
+            "Patrolman": { baseSalary: 300000, incentives: 5000 },
+            "Police Corporal": { baseSalary: 350000, incentives: 5000 },
+            "Police Staff Sergeant": { baseSalary: 400000, incentives: 5000 },
+            "Police Master Sergeant": { baseSalary: 450000, incentives: 5000 },
+            "Police Senior Master Sergeant": { baseSalary: 500000, incentives: 5000 },
+            "Police Chief Master Sergeant": { baseSalary: 550000, incentives: 5500 },
+            "Police Executive Master Sergeant": { baseSalary: 600000, incentives: 5000 },
+            // Commissioned PNP
+            "Police Lieutenant": { baseSalary: 70000, incentives: 10000 },
+            "Police Captain": { baseSalary: 750000, incentives: 10000 },
+            "Police Major": { baseSalary: 800000, incentives: 10000 },
+            "Police Lieutenant Colonel": { baseSalary: 850000, incentives: 10000 },
+            "Police Colonel": { baseSalary: 900000, incentives: 10000 },
+            "Police Brigadier General": { baseSalary: 1000000, incentives: 10000 },
+            "Police Major General": { baseSalary: 1050000, incentives: 10000 },
+            "Police Lieutenant General": { baseSalary: 1150000, incentives: 10000 },
+            "Police General": { baseSalary: 1250000, incentives: 10000 },
+            // Government Positions
+            "Mayor": { baseSalary: 500000, incentives: 10000 },
+            "Secretary to the Mayor": { baseSalary: 300000 , incentives: 10000 },
+            "Secretary to the Governor": { baseSalary: 300000 , incentives: 10000 },
             "Human Resources Manager": { baseSalary: 45000, incentives: 5000 },
-            "Human Resources": { baseSalary: 45000, incentives: 5000 },
-            "Executive Assistant": { baseSalary: 35000, incentives: 4000 }
+            "Personal Assistant to the Mayor": { baseSalary: 300000, incentives: 10000 },
+            "Personal Assistant to the Governor": { baseSalary: 300000, incentives: 10000 }
         };
-
-        function parseBadgePrefix(badge) {
-            const cleanBadge = (badge || '').trim().toUpperCase();
-
-            // 'O-' or 'O09-' prefix designates PNP Commissioned Officers
-            if (cleanBadge.startsWith('O-') || cleanBadge.startsWith('O09-') || /^O\d/.test(cleanBadge)) {
-                return { department: 'PNP', officerType: 'COMMISSIONED_OFFICER', prefix: 'O-' };
-            }
-            
-            // '09-' numeric prefix designates PNP Non-Commissioned Officers
-            if (cleanBadge.startsWith('09-') || /^09\d/.test(cleanBadge)) {
-                return { department: 'PNP', officerType: 'NON_COMMISSIONED_OFFICER', prefix: '09-' };
-            }
-
-            // 'GO-' prefix designates Government Staff
-            if (cleanBadge.startsWith('GO-') || cleanBadge.startsWith('GO')) {
-                return { department: 'GOVERNMENT', officerType: 'GOV_STAFF', prefix: 'GO-' };
-            }
-
-            return { department: 'UNKNOWN', officerType: 'UNKNOWN', prefix: '' };
-        }
 
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
@@ -1117,43 +1025,6 @@
                     cutout: '72%'
                 }
             });
-        }
-
-        async function fetchCadData() {
-            try {
-                const unitsRes = await apiFetch('/api/cad/units');
-                if (unitsRes.ok) {
-                    const units = await unitsRes.json();
-                    const tbody = document.getElementById('cad-units-body');
-                    if (tbody) {
-                        tbody.innerHTML = units.length ? units.map(u => `
-                            <tr>
-                                <td><code>${escapeHTML(u.identifier)}</code></td>
-                                <td><strong>${escapeHTML(u.status)}</strong></td>
-                                <td>${escapeHTML(u.assigned_call || 'NONE')}</td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="3">No units on duty.</td></tr>';
-                    }
-                }
-
-                const callsRes = await apiFetch('/api/cad/calls');
-                if (callsRes.ok) {
-                    const calls = await callsRes.json();
-                    const tbody = document.getElementById('cad-calls-body');
-                    if (tbody) {
-                        tbody.innerHTML = calls.length ? calls.map(c => `
-                            <tr>
-                                <td><span class="badge-ref">#${escapeHTML(c.call_id)}</span></td>
-                                <td><strong>${escapeHTML(c.title)}</strong></td>
-                                <td>${escapeHTML(c.location)}</td>
-                                <td><span style="color:${c.priority === 'HIGH' ? '#ef4444' : '#f59e0b'}; font-weight:bold;">${escapeHTML(c.priority)}</span></td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="4">No active emergency calls.</td></tr>';
-                    }
-                }
-            } catch (e) {
-                console.warn("CAD fetch error:", e);
-            }
         }
 
         async function loadSalaryPersonnelDropdown() {
@@ -1233,6 +1104,7 @@
             titleInput.readOnly = true;
             nameInput.readOnly = true;
 
+            // 1. Check existing saved salary record cache
             const existingRecord = rawSalariesCache.find(s => 
                 (s.badge_id || s.badgeId || s.id) === badgeVal
             );
@@ -1243,6 +1115,7 @@
                 return;
             }
 
+            // 2. Fall back to SALARY_GRADES lookup (case-insensitive search)
             const matchedKey = SALARY_GRADES[titleVal] ? titleVal :
                 Object.keys(SALARY_GRADES).find(k => k.toLowerCase() === titleVal.toLowerCase());
 
@@ -1844,15 +1717,11 @@
                 initChartIfNeeded();
                 applyRolePermissions();
                 fetchDashboardData();
-                fetchCadData();
                 setSalarySubView('ALL');
                 fetchSalaryData();
                 fetchTreasuryData();
                 if (!dashboardInterval) {
-                    dashboardInterval = setInterval(() => {
-                        fetchDashboardData();
-                        fetchCadData();
-                    }, 4000);
+                    dashboardInterval = setInterval(fetchDashboardData, 8000);
                 }
             } else {
                 authScreen.style.display = 'flex';
@@ -2005,7 +1874,6 @@
             }
 
             if (viewName === 'dashboard') fetchDashboardData();
-            if (viewName === 'cad') fetchCadData();
             if (viewName === 'officers') fetchOfficersData();
             if (viewName === 'government') fetchGovData();
             if (viewName === 'certificates') {
@@ -2035,7 +1903,6 @@
             document.getElementById('display-role').innerText = `${role} (${dept})`;
 
             document.getElementById('nav-users').style.display = 'none';
-            document.getElementById('nav-cad').style.display = 'flex';
             document.getElementById('nav-officers').style.display = 'flex';
             document.getElementById('nav-government').style.display = 'flex';
 
