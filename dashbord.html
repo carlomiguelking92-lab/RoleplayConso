@@ -506,6 +506,7 @@
                                     <option value="Police Brigadier General">Police Brigadier General</option>
                                     <option value="Police Major General">Police Major General</option>
                                     <option value="Police Lieutenant General">Police Lieutenant General</option>
+                                    <option value="Police General">Police General</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -981,6 +982,7 @@
             "Police Brigadier General": { baseSalary: 1000000, incentives: 10000 },
             "Police Major General": { baseSalary: 1050000, incentives: 10000 },
             "Police Lieutenant General": { baseSalary: 1150000, incentives: 10000 },
+            "Police General": { baseSalary: 1250000, incentives: 10000 },
             "Mayor": { baseSalary: 500000, incentives: 10000 },
             "Secretary to the Mayor": { baseSalary: 300000 , incentives: 10000 },
             "Secretary to the Governor": { baseSalary: 300000 , incentives: 10000 },
@@ -1070,7 +1072,7 @@
 
                 const salaries = await res.json();
                 
-                // Exclude Police General from attendance roster
+                // Exclude Police General ONLY from attendance roster
                 const pnpSalaries = (salaries || []).filter(item => {
                     const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
                     const title = (item.title || item.rank || '').toLowerCase();
@@ -1161,11 +1163,7 @@
                 if (res.ok) {
                     const rawList = await res.json();
                     
-                    // Filter out Police General
-                    salaryPersonnelCache = (rawList || []).filter(p => {
-                        const title = (p.rank || p.position || p.title || '').toLowerCase();
-                        return title !== 'police general';
-                    });
+                    salaryPersonnelCache = (rawList || []);
 
                     salaryPersonnelCache.sort((a, b) => {
                         const idA = isGov ? (a.id || '') : (a.badge || '');
@@ -1519,8 +1517,7 @@
             const unpaidPersonnel = rawSalariesCache
                 .filter(s => {
                     const isUnpaid = !s.status || s.status.toLowerCase() === 'unpaid';
-                    const title = (s.title || s.rank || '').toLowerCase();
-                    return isUnpaid && title !== 'police general';
+                    return isUnpaid;
                 })
                 .map(s => ({
                     badgeId: s.badge_id || s.badgeId || 'N/A',
@@ -1583,11 +1580,9 @@
                 return;
             }
 
-            // Exclude Police General from PNP Salary Table
             const pnpList = rawSalariesCache.filter(item => {
                 const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
-                const title = (item.title || item.rank || '').toLowerCase();
-                return dept.toUpperCase() === 'PNP' && title !== 'police general';
+                return dept.toUpperCase() === 'PNP';
             }).sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
 
             const govList = rawSalariesCache.filter(item => {
@@ -2464,11 +2459,7 @@
                 if (res.ok) {
                     const rawList = await res.json();
 
-                    // Filter out Police General
-                    currentPersonnelList = (rawList || []).filter(p => {
-                        const title = (p.rank || p.position || '').toLowerCase();
-                        return title !== 'police general';
-                    });
+                    currentPersonnelList = (rawList || []);
 
                     currentPersonnelList.sort((a, b) => {
                         const idA = isGov ? (a.id || '') : (a.badge || '');
