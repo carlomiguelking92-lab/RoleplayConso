@@ -185,6 +185,15 @@
         }
         .form-control:focus { border-color: var(--accent-blue); }
         .form-control:disabled { opacity: 0.75; cursor: not-allowed; background-color: #1e293b; }
+
+        progress {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #1e293b;
+        }
+        progress::-webkit-progress-bar { background-color: #1e293b; }
+        progress::-webkit-progress-value { background-color: var(--accent-blue); }
         
         .checkbox-list-container {
             background-color: #0f172a;
@@ -280,12 +289,8 @@
         }
 
         @media (max-width: 992px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .form-group.full-width {
-                grid-column: span 1;
-            }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
         }
 
         @media (max-width: 768px) {
@@ -306,31 +311,13 @@
             .activity-split-grid, .form-grid, .salary-summary-banner { grid-template-columns: 1fr; gap: 12px; }
             .form-group.full-width { grid-column: span 1; }
             .chart-container { height: 200px; }
-            #view-officers table, #view-salary table { min-width: 100% !important; }
-            #view-officers th, #view-officers td, #view-salary th, #view-salary td { padding: 8px 6px; font-size: 0.78rem; }
-            #view-officers td:nth-child(3) { white-space: normal; word-break: keep-all; max-width: 85px; }
-            .card-header-flex { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-            .search-bar { width: 100%; }
             .auth-card { width: 92%; max-width: 360px; padding: 20px; }
             
-            .inline-form-responsive {
-                flex-direction: column !important;
-                align-items: stretch !important;
-            }
-            .inline-form-responsive .btn-primary, .inline-form-responsive .btn-success {
-                width: 100%;
-                margin-top: 6px;
-            }
-            #card-treasury-control button {
-                width: 100%;
-            }
-            .tab-btn-group {
-                width: 100%;
-            }
-            .tab-btn-group .tab-btn, .tab-btn-group button {
-                flex: 1 1 auto;
-                text-align: center;
-            }
+            .inline-form-responsive { flex-direction: column !important; align-items: stretch !important; }
+            .inline-form-responsive .btn-primary, .inline-form-responsive .btn-success { width: 100%; margin-top: 6px; }
+            #card-treasury-control button { width: 100%; }
+            .tab-btn-group { width: 100%; }
+            .tab-btn-group .tab-btn, .tab-btn-group button { flex: 1 1 auto; text-align: center; }
         }
     </style>
 </head>
@@ -407,6 +394,7 @@
                     <li class="nav-item" id="nav-government" onclick="switchView('government')"><a><i class="fa-solid fa-landmark"></i> Government</a></li>
                     <li class="nav-item" id="nav-certificates" onclick="switchView('certificates')"><a><i class="fa-solid fa-award"></i> Certificates</a></li>
                     <li class="nav-item" id="nav-salary" onclick="switchView('salary')"><a><i class="fa-solid fa-file-invoice-dollar"></i> Salary Tracker</a></li>
+                    <li class="nav-item" id="nav-nowork-nopay" onclick="switchView('nowork-nopay')"><a><i class="fa-solid fa-calendar-check"></i> PNP Attendance</a></li>
                     <li class="nav-item" id="nav-users" onclick="switchView('users')" style="display: none;"><a><i class="fa-solid fa-users-gear"></i> User Control</a></li>
                 </ul>
             </div>
@@ -518,7 +506,6 @@
                                     <option value="Police Brigadier General">Police Brigadier General</option>
                                     <option value="Police Major General">Police Major General</option>
                                     <option value="Police Lieutenant General">Police Lieutenant General</option>
-                                    <option value="Police General">Police General</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -885,6 +872,55 @@
 
             </div>
 
+            <!-- ATTENDANCE & NO WORK NO PAY TAB (PNP ONLY) -->
+            <div id="view-nowork-nopay" class="view-section">
+                <div class="header">
+                    <div>
+                        <h1>PNP Attendance & Payroll ("No Work, No Pay")</h1>
+                        <p>Pro-rated PNP weekly salary based on verified daily duty logs (1/7 daily rate)</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(16, 185, 129, 0.2); color: var(--accent-green);"><i class="fa-solid fa-user-check"></i></div>
+                        <div class="metric-data"><h3 id="nowork-active-count">0</h3><p>Active PNP Officers (1+ Days)</p></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(239, 68, 68, 0.2); color: var(--accent-red);"><i class="fa-solid fa-user-xmark"></i></div>
+                        <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p>Inactive Officers (0 Days / ₱0)</p></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-blue);"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="metric-data"><h3 id="nowork-total-payroll">₱0.00</h3><p>Total PNP Payroll Due</p></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📋 PNP Attendance & Pro-Rated Payroll Roster</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Badge Number</th>
+                                    <th>Officer Name</th>
+                                    <th>Rank / Title</th>
+                                    <th>Weekly Attendance</th>
+                                    <th>Full Weekly Cap</th>
+                                    <th>Earned Base (Pro-Rated)</th>
+                                    <th>Incentives</th>
+                                    <th>Total Payable</th>
+                                    <th>Work Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nowork-table-body">
+                                <tr><td colspan="9">Loading PNP attendance records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div id="view-users" class="view-section">
                 <div class="header">
                     <div>
@@ -929,9 +965,7 @@
         let salaryPersonnelCache = [];
         let currentSalarySubView = 'ALL';
 
-        // Salary grade lookup for auto-filling base salary and incentives
         const SALARY_GRADES = {
-            // Non-Commissioned PNP
             "Patrolman": { baseSalary: 300000, incentives: 5000 },
             "Police Corporal": { baseSalary: 350000, incentives: 5000 },
             "Police Staff Sergeant": { baseSalary: 400000, incentives: 5000 },
@@ -939,7 +973,6 @@
             "Police Senior Master Sergeant": { baseSalary: 500000, incentives: 5000 },
             "Police Chief Master Sergeant": { baseSalary: 550000, incentives: 5500 },
             "Police Executive Master Sergeant": { baseSalary: 600000, incentives: 5000 },
-            // Commissioned PNP
             "Police Lieutenant": { baseSalary: 70000, incentives: 10000 },
             "Police Captain": { baseSalary: 750000, incentives: 10000 },
             "Police Major": { baseSalary: 800000, incentives: 10000 },
@@ -948,8 +981,6 @@
             "Police Brigadier General": { baseSalary: 1000000, incentives: 10000 },
             "Police Major General": { baseSalary: 1050000, incentives: 10000 },
             "Police Lieutenant General": { baseSalary: 1150000, incentives: 10000 },
-            "Police General": { baseSalary: 1250000, incentives: 10000 },
-            // Government Positions
             "Mayor": { baseSalary: 500000, incentives: 10000 },
             "Secretary to the Mayor": { baseSalary: 300000 , incentives: 10000 },
             "Secretary to the Governor": { baseSalary: 300000 , incentives: 10000 },
@@ -1025,6 +1056,94 @@
                     cutout: '72%'
                 }
             });
+        }
+
+        async function loadNoWorkNoPayTab() {
+            const tbody = document.getElementById('nowork-table-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="9">Loading PNP attendance records...</td></tr>';
+
+            try {
+                const res = await apiFetch('/api/salary');
+                if (!res.ok) throw new Error('Failed to fetch salary data');
+
+                const salaries = await res.json();
+                
+                // Filter strictly for PNP personnel
+                const pnpSalaries = (salaries || []).filter(item => {
+                    const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
+                    return dept.toUpperCase() === 'PNP';
+                });
+
+                if (!pnpSalaries.length) {
+                    tbody.innerHTML = '<tr><td colspan="9">No PNP attendance records found.</td></tr>';
+                    document.getElementById('nowork-active-count').innerText = '0';
+                    document.getElementById('nowork-zero-count').innerText = '0';
+                    document.getElementById('nowork-total-payroll').innerText = '₱0.00';
+                    return;
+                }
+
+                let activeCount = 0;
+                let zeroCount = 0;
+                let totalPayrollPool = 0;
+
+                pnpSalaries.sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
+
+                tbody.innerHTML = pnpSalaries.map(item => {
+                    const days = item.daysAttended || item.days_attended || 0;
+                    const baseMonthly = parseCurrency(item.baseSalary || item.salary);
+                    const fullWeekly = baseMonthly / 4.0;
+                    const dailyRate = fullWeekly / 7.0;
+                    const earnedBase = dailyRate * Math.min(7, days);
+                    const incentives = parseCurrency(item.incentives);
+                    const totalPayable = earnedBase + incentives;
+
+                    totalPayrollPool += totalPayable;
+
+                    if (days > 0) activeCount++;
+                    else zeroCount++;
+
+                    const statusVal = (item.status || 'unpaid').toLowerCase();
+                    let statusBadge = '';
+                    if (days === 0) {
+                        statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (₱0.00)</span>';
+                    } else if (statusVal === 'paid') {
+                        statusBadge = '<span class="status-dropdown paid" style="display:inline-block; text-align:center; padding:4px 8px;">PAID</span>';
+                    } else {
+                        statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">UNPAID</span>';
+                    }
+
+                    const rawKey = item.badge_id || item.badgeId || item.id || '';
+
+                    return `
+                        <tr>
+                            <td><code>${escapeHTML(rawKey)}</code></td>
+                            <td><strong>${escapeHTML(item.name || 'N/A')}</strong></td>
+                            <td>${escapeHTML(item.title || 'N/A')}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong>${days} / 7 Days</strong>
+                                    <progress value="${days}" max="7" style="width: 60px;"></progress>
+                                </div>
+                            </td>
+                            <td>${formatCurrency(fullWeekly)}</td>
+                            <td><strong style="color: var(--accent-green);">${formatCurrency(earnedBase)}</strong></td>
+                            <td>${formatCurrency(incentives)}</td>
+                            <td><strong>${formatCurrency(totalPayable)}</strong></td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('nowork-active-count').innerText = activeCount;
+                document.getElementById('nowork-zero-count').innerText = zeroCount;
+                document.getElementById('nowork-total-payroll').innerText = formatCurrency(totalPayrollPool);
+
+            } catch (err) {
+                console.error('Error loading No Work No Pay tab:', err);
+                tbody.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
+            }
         }
 
         async function loadSalaryPersonnelDropdown() {
@@ -1104,7 +1223,6 @@
             titleInput.readOnly = true;
             nameInput.readOnly = true;
 
-            // 1. Check existing saved salary record cache
             const existingRecord = rawSalariesCache.find(s => 
                 (s.badge_id || s.badgeId || s.id) === badgeVal
             );
@@ -1115,7 +1233,6 @@
                 return;
             }
 
-            // 2. Fall back to SALARY_GRADES lookup (case-insensitive search)
             const matchedKey = SALARY_GRADES[titleVal] ? titleVal :
                 Object.keys(SALARY_GRADES).find(k => k.toLowerCase() === titleVal.toLowerCase());
 
@@ -1885,6 +2002,9 @@
                 fetchSalaryData();
                 fetchTreasuryData();
             }
+            if (viewName === 'nowork-nopay') {
+                loadNoWorkNoPayTab();
+            }
             if (viewName === 'users') loadUserManagementTable();
 
             const sidebar = document.getElementById('sidebar');
@@ -1954,7 +2074,6 @@
                 const res = await apiFetch('/api/admin/pending-users');
                 if (res.ok) {
                     const rawData = await res.json();
-                    
                     const users = Array.isArray(rawData) ? rawData : (rawData.users || rawData.data || []);
 
                     if (!users.length) {
