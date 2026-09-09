@@ -779,15 +779,17 @@
                                     <th>Rank / Title</th>
                                     <th>Name</th>
                                     <th>Base Salary</th>
-                                    <th>Salary / Week</th>
+                                    <th>Full Weekly Cap</th>
+                                    <th>Days Attended</th>
+                                    <th>Pro-Rated Base</th>
                                     <th>Incentives</th>
-                                    <th>Total / Week</th>
+                                    <th>Total Pro-Rated / Wk</th>
                                     <th style="min-width: 170px;">Payment Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="pnp-salary-table-body">
-                                <tr><td colspan="9">Loading PNP salary records...</td></tr>
+                                <tr><td colspan="11">Loading PNP salary records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -795,6 +797,10 @@
                     <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                         <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;"><i class="fa-solid fa-calculator"></i> PNP Salary Breakdown & Deduction Totals</h4>
                         <div class="salary-summary-banner">
+                            <div class="summary-box">
+                                <span>Total Full Weekly Cap</span>
+                                <strong id="pnp-sum-full-cap" style="color: var(--accent-gold);">₱0.00</strong>
+                            </div>
                             <div class="summary-box">
                                 <span>Total Weekly Gross</span>
                                 <strong id="pnp-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
@@ -892,7 +898,7 @@
                         <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p>Inactive Officers (0 Days / ₱0)</p></div>
                     </div>
                     <div class="metric-card">
-                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-blue);"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-sack-dollar);"><i class="fa-solid fa-sack-dollar"></i></div>
                         <div class="metric-data"><h3 id="nowork-total-payroll">₱0.00</h3><p>Total PNP Payroll Due</p></div>
                     </div>
                 </div>
@@ -1307,7 +1313,7 @@
                     renderSalaryTables();
                 }
             } catch (e) {
-                document.getElementById('pnp-salary-table-body').innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load server data.</td></tr>';
+                document.getElementById('pnp-salary-table-body').innerHTML = '<tr><td colspan="11" style="color:#ef4444;">Failed to load server data.</td></tr>';
                 document.getElementById('gov-salary-table-body').innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load server data.</td></tr>';
             }
         }
@@ -1431,7 +1437,7 @@
             const currentUser = localStorage.getItem('username') || 'Admin';
             const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
             const badge = item.badge_id || item.badgeId || recordKey;
-            const totalWkAmount = formatCurrency(parseCurrency(item.totalWk || item.totalPerWeek));
+            const totalWkAmount = formatCurrency(item.computedTotalWk || parseCurrency(item.totalWk || item.totalPerWeek));
 
             const savePayload = {
                 department: dept,
@@ -1524,7 +1530,7 @@
                     name: s.name || 'N/A',
                     title: s.title || 'N/A',
                     department: s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP'),
-                    weeklyAmount: formatCurrency(parseCurrency(s.totalWk || s.totalPerWeek))
+                    weeklyAmount: formatCurrency(s.computedTotalWk || parseCurrency(s.totalWk || s.totalPerWeek))
                 }));
 
             let remainingBalance = '₱0.00';
@@ -1575,7 +1581,7 @@
             const govTbody = document.getElementById('gov-salary-table-body');
 
             if (!rawSalariesCache || !rawSalariesCache.length) {
-                pnpTbody.innerHTML = '<tr><td colspan="9">No salary records found.</td></tr>';
+                pnpTbody.innerHTML = '<tr><td colspan="11">No salary records found.</td></tr>';
                 govTbody.innerHTML = '<tr><td colspan="9">No salary records found.</td></tr>';
                 return;
             }
@@ -1590,12 +1596,17 @@
                 return dept.toUpperCase() === 'GOV';
             }).sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
 
-            let pnpBase = 0, pnpInc = 0, pnpTotalWk = 0, pnpPaidWk = 0;
+            let pnpBase = 0, pnpInc = 0, pnpTotalWk = 0, pnpPaidWk = 0, pnpFullCapTotal = 0;
             pnpTbody.innerHTML = pnpList.length ? pnpList.map(s => {
                 const b = parseCurrency(s.salary || s.baseSalary);
-                const w = parseCurrency(s.weekly || s.weeklySalary);
+                const fullWk = b / 4.0;
+                const days = s.daysAttended || s.days_attended || 0;
+                const isGen = (s.title || '').toLowerCase() === 'police general';
+                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
                 const i = parseCurrency(s.incentives);
-                const tw = parseCurrency(s.totalWk || s.totalPerWeek);
+                const tw = proRatedBase + i;
+                s.computedTotalWk = tw; // Cached for webhooks & status updates
+
                 const rawKey = s.badge_id || s.badgeId || s.id || '';
                 const keyEscaped = escapeHTML(rawKey);
                 const jsKey = escapeJsArg(rawKey);
@@ -1603,6 +1614,7 @@
 
                 pnpBase += b;
                 pnpInc += i;
+                pnpFullCapTotal += fullWk;
                 pnpTotalWk += tw;
 
                 if (statusVal === 'paid') {
@@ -1620,7 +1632,9 @@
                         <td><strong>${escapeHTML(s.title)}</strong></td>
                         <td>${escapeHTML(s.name)}</td>
                         <td>${formatCurrency(b)}</td>
-                        <td>${formatCurrency(w)}</td>
+                        <td>${formatCurrency(fullWk)}</td>
+                        <td>${isGen ? '<span style="color: var(--text-muted);">N/A (Exempt)</span>' : `<strong>${days} / 7 Days</strong>`}</td>
+                        <td><strong style="color: var(--accent-green);">${formatCurrency(proRatedBase)}</strong></td>
                         <td>${formatCurrency(i)}</td>
                         <td><strong>${formatCurrency(tw)}</strong></td>
                         <td>
@@ -1635,9 +1649,10 @@
                         </td>
                     </tr>
                 `;
-            }).join('') : '<tr><td colspan="9">No salary records found.</td></tr>';
+            }).join('') : '<tr><td colspan="11">No salary records found.</td></tr>';
 
             const pnpUnpaidWk = Math.max(0, pnpTotalWk - pnpPaidWk);
+            document.getElementById('pnp-sum-full-cap').innerText = formatCurrency(pnpFullCapTotal);
             document.getElementById('pnp-sum-total-wk').innerText = formatCurrency(pnpTotalWk);
             document.getElementById('pnp-sum-paid').innerText = formatCurrency(pnpPaidWk);
             document.getElementById('pnp-sum-unpaid').innerText = formatCurrency(pnpUnpaidWk);
@@ -1645,9 +1660,11 @@
             let govBase = 0, govInc = 0, govTotalWk = 0, govPaidWk = 0;
             govTbody.innerHTML = govList.length ? govList.map(s => {
                 const b = parseCurrency(s.salary || s.baseSalary);
-                const w = parseCurrency(s.weekly || s.weeklySalary);
+                const w = parseCurrency(s.weekly || s.weeklySalary) || (b / 4.0);
                 const i = parseCurrency(s.incentives);
-                const tw = parseCurrency(s.totalWk || s.totalPerWeek);
+                const tw = parseCurrency(s.totalWk || s.totalPerWeek) || (w + i);
+                s.computedTotalWk = tw;
+
                 const rawKey = s.badge_id || s.badgeId || s.id || '';
                 const keyEscaped = escapeHTML(rawKey);
                 const jsKey = escapeJsArg(rawKey);
