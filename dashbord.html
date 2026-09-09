@@ -973,7 +973,7 @@
             "Police Senior Master Sergeant": { baseSalary: 500000, incentives: 5000 },
             "Police Chief Master Sergeant": { baseSalary: 550000, incentives: 5500 },
             "Police Executive Master Sergeant": { baseSalary: 600000, incentives: 5000 },
-            "Police Lieutenant": { baseSalary: 70000, incentives: 10000 },
+            "Police Lieutenant": { baseSalary: 700000, incentives: 10000 },
             "Police Captain": { baseSalary: 750000, incentives: 10000 },
             "Police Major": { baseSalary: 800000, incentives: 10000 },
             "Police Lieutenant Colonel": { baseSalary: 850000, incentives: 10000 },
@@ -984,7 +984,7 @@
             "Mayor": { baseSalary: 500000, incentives: 10000 },
             "Secretary to the Mayor": { baseSalary: 300000 , incentives: 10000 },
             "Secretary to the Governor": { baseSalary: 300000 , incentives: 10000 },
-            "Human Resources Manager": { baseSalary: 45000, incentives: 5000 },
+            "Human Resources Manager": { baseSalary: 450000, incentives: 5000 },
             "Personal Assistant to the Mayor": { baseSalary: 300000, incentives: 10000 },
             "Personal Assistant to the Governor": { baseSalary: 300000, incentives: 10000 }
         };
@@ -1070,10 +1070,11 @@
 
                 const salaries = await res.json();
                 
-                // Filter strictly for PNP personnel
+                // Exclude Police General from attendance roster
                 const pnpSalaries = (salaries || []).filter(item => {
                     const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
-                    return dept.toUpperCase() === 'PNP';
+                    const title = (item.title || item.rank || '').toLowerCase();
+                    return dept.toUpperCase() === 'PNP' && title !== 'police general';
                 });
 
                 if (!pnpSalaries.length) {
@@ -1158,7 +1159,13 @@
             try {
                 const res = await apiFetch(endpoint);
                 if (res.ok) {
-                    salaryPersonnelCache = await res.json();
+                    const rawList = await res.json();
+                    
+                    // Filter out Police General
+                    salaryPersonnelCache = (rawList || []).filter(p => {
+                        const title = (p.rank || p.position || p.title || '').toLowerCase();
+                        return title !== 'police general';
+                    });
 
                     salaryPersonnelCache.sort((a, b) => {
                         const idA = isGov ? (a.id || '') : (a.badge || '');
@@ -1510,7 +1517,11 @@
 
         async function sendUnpaidSummaryWebhook() {
             const unpaidPersonnel = rawSalariesCache
-                .filter(s => !s.status || s.status.toLowerCase() === 'unpaid')
+                .filter(s => {
+                    const isUnpaid = !s.status || s.status.toLowerCase() === 'unpaid';
+                    const title = (s.title || s.rank || '').toLowerCase();
+                    return isUnpaid && title !== 'police general';
+                })
                 .map(s => ({
                     badgeId: s.badge_id || s.badgeId || 'N/A',
                     name: s.name || 'N/A',
@@ -1572,9 +1583,11 @@
                 return;
             }
 
+            // Exclude Police General from PNP Salary Table
             const pnpList = rawSalariesCache.filter(item => {
                 const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
-                return dept.toUpperCase() === 'PNP';
+                const title = (item.title || item.rank || '').toLowerCase();
+                return dept.toUpperCase() === 'PNP' && title !== 'police general';
             }).sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
 
             const govList = rawSalariesCache.filter(item => {
@@ -1767,7 +1780,7 @@
                     fetchSalaryData();
                 } else {
                     msgDiv.style.color = '#ef4444';
-                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized action'}`;
+                    msgDiv.innerText = `❌ Error: ${result.message || 'Unauthorized action'}`;
                 }
             } catch (err) {
                 msgDiv.style.color = '#ef4444';
@@ -1898,7 +1911,7 @@
                     }, 500);
                 } else {
                     msg.style.color = '#ef4444';
-                    msg.innerText = `❌ ${escapeHTML(data.message) || 'Login failed.'}`;
+                    msg.innerText = `❌ ${data.message || 'Login failed.'}`;
                 }
             } catch (err) {
                 msg.style.color = '#ef4444';
@@ -1939,7 +1952,7 @@
 
                 if (res.ok && (data.status === 'success' || data.success || !data.status || data.status === 'ok')) {
                     msg.style.color = '#10b981';
-                    msg.innerText = `✅ ${escapeHTML(data.message) || 'Registered successfully! Redirecting to login...'}`;
+                    msg.innerText = `✅ ${data.message || 'Registered successfully! Redirecting to login...'}`;
                     
                     setTimeout(() => {
                         switchAuthTab('login');
@@ -1949,7 +1962,7 @@
                     }, 1500);
                 } else {
                     msg.style.color = '#ef4444';
-                    msg.innerText = `❌ ${escapeHTML(data.message) || 'Registration failed.'}`;
+                    msg.innerText = `❌ ${data.message || 'Registration failed.'}`;
                 }
             } catch (err) {
                 console.error("Registration error:", err);
@@ -2195,7 +2208,7 @@
                     const canManage = isPnpAdminOrSuperAdmin();
 
                     if (!data.length) {
-                        tbody.innerHTML = `<tr><td colspan="${canManage ? 5 : 4}">No officers found.</td></tr>`;
+                        tbody.innerHTML = '<tr><td colspan="5">No officers found.</td></tr>';
                         return;
                     }
 
@@ -2279,7 +2292,7 @@
                     const canManage = isGovAdminOrSuperAdmin();
 
                     if (!data.length) {
-                        tbody.innerHTML = `<tr><td colspan="${canManage ? 5 : 4}">No government staff found.</td></tr>`;
+                        tbody.innerHTML = '<tr><td colspan="5">No government staff found.</td></tr>';
                         return;
                     }
 
@@ -2356,7 +2369,7 @@
                     fetchDashboardData();
                 } else {
                     msgDiv.style.color = '#ef4444';
-                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized'}`;
+                    msgDiv.innerText = `❌ Error: ${result.message || 'Unauthorized'}`;
                 }
             } catch (err) {
                 msgDiv.style.color = '#ef4444';
@@ -2388,7 +2401,7 @@
                     fetchDashboardData();
                 } else {
                     msgDiv.style.color = '#ef4444';
-                    msgDiv.innerText = `❌ Error: ${escapeHTML(result.message) || 'Unauthorized'}`;
+                    msgDiv.innerText = `❌ Error: ${result.message || 'Unauthorized'}`;
                 }
             } catch (err) {
                 msgDiv.style.color = '#ef4444';
@@ -2449,7 +2462,13 @@
             try {
                 const res = await apiFetch(endpoint);
                 if (res.ok) {
-                    currentPersonnelList = await res.json();
+                    const rawList = await res.json();
+
+                    // Filter out Police General
+                    currentPersonnelList = (rawList || []).filter(p => {
+                        const title = (p.rank || p.position || '').toLowerCase();
+                        return title !== 'police general';
+                    });
 
                     currentPersonnelList.sort((a, b) => {
                         const idA = isGov ? (a.id || '') : (a.badge || '');
@@ -2567,7 +2586,7 @@
                 const pId = (isSingleMode && customId && !customId.startsWith('[Multiple')) ? customId : defaultId;
 
                 statusDiv.style.color = '#60a5fa';
-                statusDiv.innerText = `⏳ Generating (${i + 1}/${checkedBoxes.length}): ${escapeHTML(pName)}...`;
+                statusDiv.innerText = `⏳ Generating (${i + 1}/${checkedBoxes.length}): ${pName}...`;
 
                 const payload = {
                     template: template,
