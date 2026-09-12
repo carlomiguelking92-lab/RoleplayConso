@@ -394,7 +394,7 @@
                     <li class="nav-item" id="nav-government" onclick="switchView('government')"><a><i class="fa-solid fa-landmark"></i> Government</a></li>
                     <li class="nav-item" id="nav-certificates" onclick="switchView('certificates')"><a><i class="fa-solid fa-award"></i> Certificates</a></li>
                     <li class="nav-item" id="nav-salary" onclick="switchView('salary')"><a><i class="fa-solid fa-file-invoice-dollar"></i> Salary Tracker</a></li>
-                    <li class="nav-item" id="nav-nowork-nopay" onclick="switchView('nowork-nopay')"><a><i class="fa-solid fa-calendar-check"></i> PNP Attendance</a></li>
+                    <li class="nav-item" id="nav-nowork-nopay" onclick="switchView('nowork-nopay')"><a><i class="fa-solid fa-calendar-check"></i> Attendance Policy</a></li>
                     <li class="nav-item" id="nav-users" onclick="switchView('users')" style="display: none;"><a><i class="fa-solid fa-users-gear"></i> User Control</a></li>
                 </ul>
             </div>
@@ -780,7 +780,6 @@
                                     <th>Name</th>
                                     <th>Base Salary</th>
                                     <th>Full Weekly Cap</th>
-                                    <th>Days Attended</th>
                                     <th>Pro-Rated Base</th>
                                     <th>Incentives</th>
                                     <th>Total Pro-Rated / Wk</th>
@@ -789,7 +788,7 @@
                                 </tr>
                             </thead>
                             <tbody id="pnp-salary-table-body">
-                                <tr><td colspan="11">Loading PNP salary records...</td></tr>
+                                <tr><td colspan="10">Loading PNP salary records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -827,15 +826,16 @@
                                     <th>Position / Title</th>
                                     <th>Name</th>
                                     <th>Base Salary</th>
-                                    <th>Salary / Week</th>
+                                    <th>Full Weekly Cap</th>
+                                    <th>Pro-Rated Base</th>
                                     <th>Incentives</th>
-                                    <th>Total / Week</th>
+                                    <th>Total Pro-Rated / Wk</th>
                                     <th style="min-width: 170px;">Payment Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="gov-salary-table-body">
-                                <tr><td colspan="9">Loading Government salary records...</td></tr>
+                                <tr><td colspan="10">Loading Government salary records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -843,6 +843,10 @@
                     <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                         <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;"><i class="fa-solid fa-calculator"></i> Government Salary Breakdown & Deduction Totals</h4>
                         <div class="salary-summary-banner">
+                            <div class="summary-box">
+                                <span>Total Full Weekly Cap</span>
+                                <strong id="gov-sum-full-cap" style="color: var(--accent-gold);">₱0.00</strong>
+                            </div>
                             <div class="summary-box">
                                 <span>Total Weekly Gross</span>
                                 <strong id="gov-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
@@ -863,6 +867,10 @@
                     <h3><i class="fa-solid fa-calculator" style="color: var(--accent-blue);"></i> Combined Overall Total (PNP + Government)</h3>
                     <div class="salary-summary-banner">
                         <div class="summary-box">
+                            <span>Total Full Weekly Cap</span>
+                            <strong id="grand-full-cap-total" style="color: var(--accent-gold);">₱0.00</strong>
+                        </div>
+                        <div class="summary-box">
                             <span>Total Gross Weekly Salary</span>
                             <strong id="grand-gross-total" style="color: var(--accent-blue);">₱0.00</strong>
                         </div>
@@ -879,39 +887,46 @@
 
             </div>
 
-            <!-- ATTENDANCE & NO WORK NO PAY TAB (PNP ONLY) -->
+            <!-- ATTENDANCE & NO WORK NO PAY TAB (STRUCTURED LIKE SALARY TRACKER) -->
             <div id="view-nowork-nopay" class="view-section">
                 <div class="header">
                     <div>
-                        <h1>PNP Attendance & Payroll ("No Work, No Pay")</h1>
-                        <p>Pro-rated PNP weekly salary based on verified daily duty logs (1/7 daily rate)</p>
+                        <h1>Attendance & Payroll ("No Work, No Pay")</h1>
+                        <p>Pro-rated weekly salary based on verified daily duty logs (1/7 daily rate)</p>
+                    </div>
+
+                    <div class="tab-btn-group" style="border: none; align-items: center;">
+                        <button class="tab-btn active" id="btn-nowork-all" onclick="setNoWorkSubView('ALL')"><i class="fa-solid fa-list-check"></i> All View</button>
+                        <button class="tab-btn" id="btn-nowork-pnp" onclick="setNoWorkSubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Dept</button>
+                        <button class="tab-btn" id="btn-nowork-gov" onclick="setNoWorkSubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Dept</button>
                     </div>
                 </div>
 
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(16, 185, 129, 0.2); color: var(--accent-green);"><i class="fa-solid fa-user-check"></i></div>
-                        <div class="metric-data"><h3 id="nowork-active-count">0</h3><p>Active PNP Officers (1+ Days)</p></div>
+                        <div class="metric-data"><h3 id="nowork-active-count">0</h3><p id="nowork-lbl-active">Active Personnel (1+ Days)</p></div>
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(239, 68, 68, 0.2); color: var(--accent-red);"><i class="fa-solid fa-user-xmark"></i></div>
-                        <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p>Inactive Officers (0 Days / ₱0)</p></div>
+                        <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p id="nowork-lbl-inactive">Inactive Personnel (0 Days / ₱0)</p></div>
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-sack-dollar);"><i class="fa-solid fa-sack-dollar"></i></div>
-                        <div class="metric-data"><h3 id="nowork-total-payroll">₱0.00</h3><p>Total PNP Payroll Due</p></div>
+                        <div class="metric-data"><h3 id="nowork-total-payroll">₱0.00</h3><p id="nowork-lbl-payroll">Total Payroll Due</p></div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>📋 PNP Attendance & Pro-Rated Payroll Roster</h3>
+                <!-- PNP Attendance Card -->
+                <div class="card" id="nowork-card-pnp">
+                    <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-user-shield"></i> PNP Attendance & Pro-Rated Payroll Roster</h3>
                     <div class="table-responsive" style="margin-top: 16px;">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Badge Number</th>
                                     <th>Officer Name</th>
-                                    <th>Rank / Title</th>
+                                    <th>Rank</th>
                                     <th>Weekly Attendance</th>
                                     <th>Full Weekly Cap</th>
                                     <th>Earned Base (Pro-Rated)</th>
@@ -920,8 +935,33 @@
                                     <th>Work Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="nowork-table-body">
+                            <tbody id="nowork-pnp-table-body">
                                 <tr><td colspan="9">Loading PNP attendance records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Government Attendance Card -->
+                <div class="card" id="nowork-card-gov">
+                    <h3 style="color: var(--accent-green);"><i class="fa-solid fa-landmark"></i> Government Attendance & Pro-Rated Payroll Roster</h3>
+                    <div class="table-responsive" style="margin-top: 16px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Serial No</th>
+                                    <th>Member Name</th>
+                                    <th>Position / Title</th>
+                                    <th>Weekly Attendance</th>
+                                    <th>Full Weekly Cap</th>
+                                    <th>Earned Base (Pro-Rated)</th>
+                                    <th>Incentives</th>
+                                    <th>Total Payable</th>
+                                    <th>Work Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nowork-gov-table-body">
+                                <tr><td colspan="9">Loading Government attendance records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -971,6 +1011,7 @@
         let rawSalariesCache = [];
         let salaryPersonnelCache = [];
         let currentSalarySubView = 'ALL';
+        let currentNoWorkSubView = 'ALL';
 
         const SALARY_GRADES = {
             "Patrolman": { baseSalary: 300000, incentives: 5000 },
@@ -1066,84 +1107,128 @@
             });
         }
 
-        async function loadNoWorkNoPayTab() {
-            const tbody = document.getElementById('nowork-table-body');
-            if (!tbody) return;
+        function setNoWorkSubView(view) {
+            currentNoWorkSubView = view;
+            const btnAll = document.getElementById('btn-nowork-all');
+            const btnPnp = document.getElementById('btn-nowork-pnp');
+            const btnGov = document.getElementById('btn-nowork-gov');
 
-            tbody.innerHTML = '<tr><td colspan="9">Loading PNP attendance records...</td></tr>';
+            if (btnAll) btnAll.classList.toggle('active', view === 'ALL');
+            if (btnPnp) btnPnp.classList.toggle('active', view === 'PNP');
+            if (btnGov) btnGov.classList.toggle('active', view === 'GOV');
+
+            const pnpCard = document.getElementById('nowork-card-pnp');
+            const govCard = document.getElementById('nowork-card-gov');
+
+            if (view === 'PNP') {
+                if (pnpCard) pnpCard.style.display = 'block';
+                if (govCard) govCard.style.display = 'none';
+            } else if (view === 'GOV') {
+                if (pnpCard) pnpCard.style.display = 'none';
+                if (govCard) govCard.style.display = 'block';
+            } else {
+                if (pnpCard) pnpCard.style.display = 'block';
+                if (govCard) govCard.style.display = 'block';
+            }
+
+            loadNoWorkNoPayTab();
+        }
+
+        async function loadNoWorkNoPayTab() {
+            const tbodyPnp = document.getElementById('nowork-pnp-table-body');
+            const tbodyGov = document.getElementById('nowork-gov-table-body');
+
+            if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="9">Loading PNP attendance records...</td></tr>';
+            if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="9">Loading Government attendance records...</td></tr>';
 
             try {
                 const res = await apiFetch('/api/salary');
                 if (!res.ok) throw new Error('Failed to fetch salary data');
 
-                const salaries = await res.json();
-                
-                // Exclude Police General ONLY from attendance roster
-                const pnpSalaries = (salaries || []).filter(item => {
-                    const dept = item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP');
-                    const title = (item.title || item.rank || '').toLowerCase();
-                    return dept.toUpperCase() === 'PNP' && title !== 'police general';
-                });
+                const salaries = await res.json() || [];
 
-                if (!pnpSalaries.length) {
-                    tbody.innerHTML = '<tr><td colspan="9">No PNP attendance records found.</td></tr>';
-                    document.getElementById('nowork-active-count').innerText = '0';
-                    document.getElementById('nowork-zero-count').innerText = '0';
-                    document.getElementById('nowork-total-payroll').innerText = '₱0.00';
-                    return;
-                }
+                const pnpSalaries = salaries.filter(item => {
+                    const dept = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+                    return dept === 'PNP';
+                }).sort((a, b) => compareIDs(a.badge_id || a.badgeId || a.id, b.badge_id || b.badgeId || b.id));
+
+                const govSalaries = salaries.filter(item => {
+                    const dept = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+                    return dept === 'GOV';
+                }).sort((a, b) => compareIDs(a.badge_id || a.badgeId || a.id, b.badge_id || b.badgeId || b.id));
 
                 let activeCount = 0;
                 let zeroCount = 0;
                 let totalPayrollPool = 0;
 
-                pnpSalaries.sort((a, b) => compareIDs(a.badge_id || a.badgeId, b.badge_id || b.badgeId));
+                const renderRows = (list) => {
+                    if (!list.length) return '<tr><td colspan="9">No attendance records found.</td></tr>';
+                    return list.map(item => {
+                        const days = item.daysAttended || item.days_attended || (item.days !== undefined ? item.days : 0);
+                        const baseMonthly = parseCurrency(item.baseSalary || item.salary);
+                        const fullWeekly = parseCurrency(item.weekly || item.weeklySalary) || (baseMonthly / 4.0);
+                        const isGen = (item.title || item.rank || '').toLowerCase() === 'police general';
+                        const dailyRate = fullWeekly / 7.0;
+                        const earnedBase = isGen ? fullWeekly : dailyRate * Math.min(7, days);
+                        const incentives = parseCurrency(item.incentives);
+                        const totalPayable = earnedBase + incentives;
 
-                tbody.innerHTML = pnpSalaries.map(item => {
-                    const days = item.daysAttended || item.days_attended || 0;
-                    const baseMonthly = parseCurrency(item.baseSalary || item.salary);
-                    const fullWeekly = baseMonthly / 4.0;
-                    const dailyRate = fullWeekly / 7.0;
-                    const earnedBase = dailyRate * Math.min(7, days);
-                    const incentives = parseCurrency(item.incentives);
-                    const totalPayable = earnedBase + incentives;
+                        const deptName = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+                        if (currentNoWorkSubView === 'ALL' || currentNoWorkSubView === deptName) {
+                            totalPayrollPool += totalPayable;
+                            if (days > 0 || isGen) activeCount++;
+                            else zeroCount++;
+                        }
 
-                    totalPayrollPool += totalPayable;
+                        const statusVal = (item.status || 'unpaid').toLowerCase();
+                        let statusBadge = '';
+                        if (days === 0 && !isGen) {
+                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (₱0.00)</span>';
+                        } else if (statusVal === 'paid') {
+                            statusBadge = '<span class="status-dropdown paid" style="display:inline-block; text-align:center; padding:4px 8px;">PAID</span>';
+                        } else {
+                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">UNPAID</span>';
+                        }
 
-                    if (days > 0) activeCount++;
-                    else zeroCount++;
+                        const rawKey = item.badge_id || item.badgeId || item.id || '';
 
-                    const statusVal = (item.status || 'unpaid').toLowerCase();
-                    let statusBadge = '';
-                    if (days === 0) {
-                        statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (₱0.00)</span>';
-                    } else if (statusVal === 'paid') {
-                        statusBadge = '<span class="status-dropdown paid" style="display:inline-block; text-align:center; padding:4px 8px;">PAID</span>';
-                    } else {
-                        statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">UNPAID</span>';
-                    }
+                        return `
+                            <tr>
+                                <td><code>${escapeHTML(rawKey)}</code></td>
+                                <td><strong>${escapeHTML(item.name || 'N/A')}</strong></td>
+                                <td>${escapeHTML(item.title || item.rank || item.position || 'N/A')}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong>${isGen ? 'Exempt' : `${days} / 7 Days`}</strong>
+                                        <progress value="${isGen ? 7 : days}" max="7" style="width: 60px;"></progress>
+                                    </div>
+                                </td>
+                                <td>${formatCurrency(fullWeekly)}</td>
+                                <td><strong style="color: var(--accent-green);">${formatCurrency(earnedBase)}</strong></td>
+                                <td>${formatCurrency(incentives)}</td>
+                                <td><strong>${formatCurrency(totalPayable)}</strong></td>
+                                <td>${statusBadge}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                };
 
-                    const rawKey = item.badge_id || item.badgeId || item.id || '';
+                if (tbodyPnp) tbodyPnp.innerHTML = renderRows(pnpSalaries);
+                if (tbodyGov) tbodyGov.innerHTML = renderRows(govSalaries);
 
-                    return `
-                        <tr>
-                            <td><code>${escapeHTML(rawKey)}</code></td>
-                            <td><strong>${escapeHTML(item.name || 'N/A')}</strong></td>
-                            <td>${escapeHTML(item.title || 'N/A')}</td>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <strong>${days} / 7 Days</strong>
-                                    <progress value="${days}" max="7" style="width: 60px;"></progress>
-                                </div>
-                            </td>
-                            <td>${formatCurrency(fullWeekly)}</td>
-                            <td><strong style="color: var(--accent-green);">${formatCurrency(earnedBase)}</strong></td>
-                            <td>${formatCurrency(incentives)}</td>
-                            <td><strong>${formatCurrency(totalPayable)}</strong></td>
-                            <td>${statusBadge}</td>
-                        </tr>
-                    `;
-                }).join('');
+                if (currentNoWorkSubView === 'PNP') {
+                    document.getElementById('nowork-lbl-active').innerText = 'Active Officers (1+ Days)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Officers (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-payroll').innerText = 'PNP Total Payroll Due';
+                } else if (currentNoWorkSubView === 'GOV') {
+                    document.getElementById('nowork-lbl-active').innerText = 'Active Gov Staff (1+ Days)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Gov Staff (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-payroll').innerText = 'Gov Total Payroll Due';
+                } else {
+                    document.getElementById('nowork-lbl-active').innerText = 'Active Personnel (1+ Days)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Personnel (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-payroll').innerText = 'Total Combined Payroll Due';
+                }
 
                 document.getElementById('nowork-active-count').innerText = activeCount;
                 document.getElementById('nowork-zero-count').innerText = zeroCount;
@@ -1151,7 +1236,8 @@
 
             } catch (err) {
                 console.error('Error loading No Work No Pay tab:', err);
-                tbody.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
+                if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
+                if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
             }
         }
 
@@ -1313,8 +1399,8 @@
                     renderSalaryTables();
                 }
             } catch (e) {
-                document.getElementById('pnp-salary-table-body').innerHTML = '<tr><td colspan="11" style="color:#ef4444;">Failed to load server data.</td></tr>';
-                document.getElementById('gov-salary-table-body').innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load server data.</td></tr>';
+                document.getElementById('pnp-salary-table-body').innerHTML = '<tr><td colspan="10" style="color:#ef4444;">Failed to load server data.</td></tr>';
+                document.getElementById('gov-salary-table-body').innerHTML = '<tr><td colspan="10" style="color:#ef4444;">Failed to load server data.</td></tr>';
             }
         }
 
@@ -1581,8 +1667,8 @@
             const govTbody = document.getElementById('gov-salary-table-body');
 
             if (!rawSalariesCache || !rawSalariesCache.length) {
-                pnpTbody.innerHTML = '<tr><td colspan="11">No salary records found.</td></tr>';
-                govTbody.innerHTML = '<tr><td colspan="9">No salary records found.</td></tr>';
+                pnpTbody.innerHTML = '<tr><td colspan="10">No salary records found.</td></tr>';
+                govTbody.innerHTML = '<tr><td colspan="10">No salary records found.</td></tr>';
                 return;
             }
 
@@ -1602,10 +1688,10 @@
                 const fullWk = b / 4.0;
                 const days = s.daysAttended || s.days_attended || 0;
                 const isGen = (s.title || '').toLowerCase() === 'police general';
-                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
+                const proRatedBase = fullWk; // Full pay for this week
                 const i = parseCurrency(s.incentives);
                 const tw = proRatedBase + i;
-                s.computedTotalWk = tw; // Cached for webhooks & status updates
+                s.computedTotalWk = tw;
 
                 const rawKey = s.badge_id || s.badgeId || s.id || '';
                 const keyEscaped = escapeHTML(rawKey);
@@ -1633,7 +1719,6 @@
                         <td>${escapeHTML(s.name)}</td>
                         <td>${formatCurrency(b)}</td>
                         <td>${formatCurrency(fullWk)}</td>
-                        <td>${isGen ? '<span style="color: var(--text-muted);">N/A (Exempt)</span>' : `<strong>${days} / 7 Days</strong>`}</td>
                         <td><strong style="color: var(--accent-green);">${formatCurrency(proRatedBase)}</strong></td>
                         <td>${formatCurrency(i)}</td>
                         <td><strong>${formatCurrency(tw)}</strong></td>
@@ -1649,7 +1734,7 @@
                         </td>
                     </tr>
                 `;
-            }).join('') : '<tr><td colspan="11">No salary records found.</td></tr>';
+            }).join('') : '<tr><td colspan="10">No salary records found.</td></tr>';
 
             const pnpUnpaidWk = Math.max(0, pnpTotalWk - pnpPaidWk);
             document.getElementById('pnp-sum-full-cap').innerText = formatCurrency(pnpFullCapTotal);
@@ -1657,12 +1742,14 @@
             document.getElementById('pnp-sum-paid').innerText = formatCurrency(pnpPaidWk);
             document.getElementById('pnp-sum-unpaid').innerText = formatCurrency(pnpUnpaidWk);
 
-            let govBase = 0, govInc = 0, govTotalWk = 0, govPaidWk = 0;
+            let govBase = 0, govInc = 0, govTotalWk = 0, govPaidWk = 0, govFullCapTotal = 0;
             govTbody.innerHTML = govList.length ? govList.map(s => {
                 const b = parseCurrency(s.salary || s.baseSalary);
-                const w = parseCurrency(s.weekly || s.weeklySalary) || (b / 4.0);
+                const fullWk = parseCurrency(s.weekly || s.weeklySalary) || (b / 4.0);
+                const days = s.daysAttended || s.days_attended || (s.days !== undefined ? s.days : 0);
+                const proRatedBase = fullWk; // Full weekly base pay for this week
                 const i = parseCurrency(s.incentives);
-                const tw = parseCurrency(s.totalWk || s.totalPerWeek) || (w + i);
+                const tw = proRatedBase + i;
                 s.computedTotalWk = tw;
 
                 const rawKey = s.badge_id || s.badgeId || s.id || '';
@@ -1672,6 +1759,7 @@
 
                 govBase += b;
                 govInc += i;
+                govFullCapTotal += fullWk;
                 govTotalWk += tw;
 
                 if (statusVal === 'paid') {
@@ -1689,7 +1777,8 @@
                         <td><strong>${escapeHTML(s.title)}</strong></td>
                         <td>${escapeHTML(s.name)}</td>
                         <td>${formatCurrency(b)}</td>
-                        <td>${formatCurrency(w)}</td>
+                        <td>${formatCurrency(fullWk)}</td>
+                        <td><strong style="color: var(--accent-green);">${formatCurrency(proRatedBase)}</strong></td>
                         <td>${formatCurrency(i)}</td>
                         <td><strong>${formatCurrency(tw)}</strong></td>
                         <td>
@@ -1704,17 +1793,20 @@
                         </td>
                     </tr>
                 `;
-            }).join('') : '<tr><td colspan="9">No salary records found.</td></tr>';
+            }).join('') : '<tr><td colspan="10">No salary records found.</td></tr>';
 
             const govUnpaidWk = Math.max(0, govTotalWk - govPaidWk);
+            document.getElementById('gov-sum-full-cap').innerText = formatCurrency(govFullCapTotal);
             document.getElementById('gov-sum-total-wk').innerText = formatCurrency(govTotalWk);
             document.getElementById('gov-sum-paid').innerText = formatCurrency(govPaidWk);
             document.getElementById('gov-sum-unpaid').innerText = formatCurrency(govUnpaidWk);
 
+            const grandFullCap = pnpFullCapTotal + govFullCapTotal;
             const grandGross = pnpTotalWk + govTotalWk;
             const grandPaid = pnpPaidWk + govPaidWk;
             const grandUnpaid = Math.max(0, grandGross - grandPaid);
 
+            document.getElementById('grand-full-cap-total').innerText = formatCurrency(grandFullCap);
             document.getElementById('grand-gross-total').innerText = formatCurrency(grandGross);
             document.getElementById('grand-paid-total').innerText = formatCurrency(grandPaid);
             document.getElementById('grand-unpaid-total').innerText = formatCurrency(grandUnpaid);
@@ -2028,7 +2120,7 @@
                 fetchTreasuryData();
             }
             if (viewName === 'nowork-nopay') {
-                loadNoWorkNoPayTab();
+                setNoWorkSubView(currentNoWorkSubView || 'ALL');
             }
             if (viewName === 'users') loadUserManagementTable();
 
