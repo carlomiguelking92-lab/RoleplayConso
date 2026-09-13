@@ -1688,7 +1688,7 @@
                 const fullWk = b / 4.0;
                 const days = s.daysAttended || s.days_attended || 0;
                 const isGen = (s.title || '').toLowerCase() === 'police general';
-                const proRatedBase = fullWk; // Full pay for this week
+                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
                 const i = parseCurrency(s.incentives);
                 const tw = proRatedBase + i;
                 s.computedTotalWk = tw;
@@ -1747,7 +1747,7 @@
                 const b = parseCurrency(s.salary || s.baseSalary);
                 const fullWk = parseCurrency(s.weekly || s.weeklySalary) || (b / 4.0);
                 const days = s.daysAttended || s.days_attended || (s.days !== undefined ? s.days : 0);
-                const proRatedBase = fullWk; // Full weekly base pay for this week
+                const proRatedBase = (fullWk / 7.0) * Math.min(7, days);
                 const i = parseCurrency(s.incentives);
                 const tw = proRatedBase + i;
                 s.computedTotalWk = tw;
