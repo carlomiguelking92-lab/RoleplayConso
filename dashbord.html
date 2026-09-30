@@ -194,37 +194,6 @@
         }
         progress::-webkit-progress-bar { background-color: #1e293b; }
         progress::-webkit-progress-value { background-color: var(--accent-blue); }
-        
-        .checkbox-list-container {
-            background-color: #0f172a;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            max-height: 180px;
-            overflow-y: auto;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 0.88rem;
-            color: var(--text-main);
-            padding: 8px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            user-select: none;
-            transition: background 0.15s;
-        }
-
-        .checkbox-item:hover { background-color: #1e293b; }
-        .checkbox-item input[type="checkbox"] { accent-color: var(--accent-blue); width: 18px; height: 18px; cursor: pointer; }
-        .checkbox-item label { cursor: pointer; flex: 1; margin: 0; color: var(--text-main); font-weight: normal; }
 
         .btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
         .btn-primary:hover { background-color: #1d4ed8; }
@@ -392,7 +361,6 @@
                     <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')"><a><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
                     <li class="nav-item" id="nav-officers" onclick="switchView('officers')"><a><i class="fa-solid fa-user-shield"></i> Officers</a></li>
                     <li class="nav-item" id="nav-government" onclick="switchView('government')"><a><i class="fa-solid fa-landmark"></i> Government</a></li>
-                    <li class="nav-item" id="nav-certificates" onclick="switchView('certificates')"><a><i class="fa-solid fa-award"></i> Certificates</a></li>
                     <li class="nav-item" id="nav-salary" onclick="switchView('salary')"><a><i class="fa-solid fa-file-invoice-dollar"></i> Salary Tracker</a></li>
                     <li class="nav-item" id="nav-nowork-nopay" onclick="switchView('nowork-nopay')"><a><i class="fa-solid fa-calendar-check"></i> Attendance Policy</a></li>
                     <li class="nav-item" id="nav-users" onclick="switchView('users')" style="display: none;"><a><i class="fa-solid fa-users-gear"></i> User Control</a></li>
@@ -575,87 +543,6 @@
                             </thead>
                             <tbody id="gov-table-body">
                                 <tr><td colspan="5">Loading Government Staff...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-certificates" class="view-section">
-                <div class="header">
-                    <div>
-                        <h1>Certificates Portal</h1>
-                        <p>Issue & Verify Region IX Certificates</p>
-                    </div>
-                </div>
-
-                <div class="card" id="card-generate-cert">
-                    <h3>🎓 Web Certificate Generator</h3>
-                    <form id="cert-form" onsubmit="handleGenerateCertificate(event)">
-                        <div class="form-grid">
-                            <div class="form-group full-width">
-                                <label for="cert-template">Certificate Template</label>
-                                <select id="cert-template" class="form-control" onchange="onTemplateChange()">
-                                    <option value="PNP - Certificate of Recognition">PNP - Certificate of Recognition</option>
-                                    <option value="PNP - Certificate of Achievement">PNP - Certificate of Achievement</option>
-                                    <option value="PNP - Certificate of Appreciation">PNP - Certificate of Appreciation</option>
-                                    <option value="PNP - Certificate of Commendation">PNP - Certificate of Commendation</option>
-                                    <option value="Gov Office - Certificate of Appreciation">Gov Office - Certificate of Appreciation</option>
-                                    <option value="Gov Office - General Certificate">Gov Office - General Certificate</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label>Select Personnel / Badge No <small style="color: var(--text-muted); font-weight: normal;">(Check one or more personnel)</small></label>
-                                <div id="cert-personnel-checkboxes" class="checkbox-list-container">
-                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Loading personnel...</span>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="cert-name">Personnel Name</label>
-                                <input type="text" id="cert-name" class="form-control" placeholder="Auto-filled from selection" required />
-                            </div>
-
-                            <div class="form-group">
-                                <label id="lbl-rank" for="cert-title">Rank / Title</label>
-                                <input type="text" id="cert-title" class="form-control" placeholder="Auto-filled from selection" required />
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label id="lbl-id" for="cert-id">Badge / ID No</label>
-                                <input type="text" id="cert-id" class="form-control" placeholder="Auto-filled from selection" required />
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label for="cert-reason">Reason / Citation Message</label>
-                                <textarea id="cert-reason" class="form-control" rows="3" placeholder="Enter reason or commendation text..." required></textarea>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btn-generate-cert" class="btn-primary" style="margin-top: 12px; width: 100%;">Generate & Send Certificate</button>
-                        <div id="cert-status-msg" class="status-msg"></div>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>📜 Issued Certificates Registry</h3>
-                        <input type="text" id="cert-search" class="search-bar" placeholder="Search Ref Code, Name, or ID..." onkeyup="filterCertificates()" />
-                    </div>
-                    <div class="table-responsive" style="margin-top: 16px;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Ref Code</th>
-                                    <th>Personnel Name</th>
-                                    <th>ID / Badge</th>
-                                    <th>Template</th>
-                                    <th>Issued Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cert-registry-body">
-                                <tr><td colspan="5">Loading certificates...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1003,8 +890,6 @@
     <script>
         const API_BASE_URL = 'https://roleplayconso.onrender.com';
 
-        let certificatesCache = [];
-        let currentPersonnelList = [];
         let dashboardInterval = null;
         let dutyChart = null;
 
@@ -2110,10 +1995,6 @@
             if (viewName === 'dashboard') fetchDashboardData();
             if (viewName === 'officers') fetchOfficersData();
             if (viewName === 'government') fetchGovData();
-            if (viewName === 'certificates') {
-                loadCertificates();
-                loadPersonnelCheckboxes();
-            }
             if (viewName === 'salary') {
                 setSalarySubView(currentSalarySubView || 'ALL');
                 fetchSalaryData();
@@ -2145,7 +2026,6 @@
 
             document.getElementById('card-add-officer').style.display = 'none';
             document.getElementById('card-add-gov').style.display = 'none';
-            document.getElementById('card-generate-cert').style.display = 'none';
 
             const webhookBtn = document.getElementById('btn-webhook-unpaid');
             const treasuryCard = document.getElementById('card-treasury-control');
@@ -2161,7 +2041,6 @@
                 document.getElementById('nav-users').style.display = 'flex';
                 document.getElementById('card-add-officer').style.display = 'block';
                 document.getElementById('card-add-gov').style.display = 'block';
-                document.getElementById('card-generate-cert').style.display = 'block';
                 if (webhookBtn) webhookBtn.style.display = 'inline-block';
                 if (treasuryCard) treasuryCard.style.display = 'block';
                 return;
@@ -2173,11 +2052,9 @@
                 if (dept === 'GOV') {
                     document.getElementById('nav-officers').style.display = 'none';
                     document.getElementById('card-add-gov').style.display = 'block';
-                    document.getElementById('card-generate-cert').style.display = 'block';
                 } else if (dept === 'PNP') {
                     document.getElementById('nav-government').style.display = 'none';
                     document.getElementById('card-add-officer').style.display = 'block';
-                    document.getElementById('card-generate-cert').style.display = 'block';
                 }
             } else if (role === 'MEMBER') {
                 if (dept === 'GOV') document.getElementById('nav-officers').style.display = 'none';
@@ -2510,223 +2387,6 @@
             } catch (err) {
                 msgDiv.style.color = '#ef4444';
                 msgDiv.innerText = '❌ Failed to connect to server.';
-            }
-        }
-
-        async function loadCertificates() {
-            try {
-                const res = await apiFetch('/api/certificates');
-                if (res.ok) {
-                    certificatesCache = await res.json();
-                    renderCertificatesTable(certificatesCache);
-                }
-            } catch (e) {
-                document.getElementById('cert-registry-body').innerHTML = '<tr><td colspan="5" style="color:#ef4444;">Failed to load certificates.</td></tr>';
-            }
-        }
-
-        function renderCertificatesTable(data) {
-            const tbody = document.getElementById('cert-registry-body');
-            if (!data || !data.length) {
-                tbody.innerHTML = '<tr><td colspan="5">No certificate records found.</td></tr>';
-                return;
-            }
-
-            const sortedData = [...data].sort((a, b) => compareIDs(a.id_or_badge || a.ref_code, b.id_or_badge || b.ref_code));
-
-            tbody.innerHTML = sortedData.map(cert => `
-                <tr>
-                    <td><span class="badge-ref">${escapeHTML(cert.ref_code)}</span></td>
-                    <td class="wrap-text"><strong>${escapeHTML(cert.personnel_name)}</strong></td>
-                    <td><code>${escapeHTML(cert.id_or_badge)}</code></td>
-                    <td class="wrap-text">${escapeHTML(cert.template_type)}</td>
-                    <td>${escapeHTML(cert.issued_date)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function filterCertificates() {
-            const q = document.getElementById('cert-search').value.toLowerCase().trim();
-            const filtered = certificatesCache.filter(c =>
-                (c.ref_code && String(c.ref_code).toLowerCase().includes(q)) ||
-                (c.personnel_name && String(c.personnel_name).toLowerCase().includes(q)) ||
-                (c.id_or_badge && String(c.id_or_badge).toLowerCase().includes(q))
-            );
-            renderCertificatesTable(filtered);
-        }
-
-        async function loadPersonnelCheckboxes() {
-            const template = document.getElementById('cert-template').value;
-            const isGov = template.startsWith('Gov Office');
-            const endpoint = isGov ? '/api/government' : '/api/officers';
-            const container = document.getElementById('cert-personnel-checkboxes');
-
-            container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">Loading personnel...</span>';
-
-            try {
-                const res = await apiFetch(endpoint);
-                if (res.ok) {
-                    const rawList = await res.json();
-
-                    currentPersonnelList = (rawList || []);
-
-                    currentPersonnelList.sort((a, b) => {
-                        const idA = isGov ? (a.id || '') : (a.badge || '');
-                        const idB = isGov ? (b.id || '') : (b.badge || '');
-                        return compareIDs(idA, idB);
-                    });
-
-                    container.innerHTML = '';
-                    
-                    if (currentPersonnelList.length === 0) {
-                        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">No personnel records found.</span>';
-                        return;
-                    }
-
-                    currentPersonnelList.forEach((person, index) => {
-                        const idOrBadge = escapeHTML(isGov ? person.id : person.badge);
-                        const titleOrRank = escapeHTML(isGov ? person.position : person.rank);
-                        const personName = escapeHTML(person.name || 'Unnamed Personnel');
-                        
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'checkbox-item';
-                        itemDiv.innerHTML = `
-                            <input type="checkbox" id="person-cb-${index}" class="person-checkbox" value="${index}" onchange="onPersonnelSelect()" />
-                            <label for="person-cb-${index}">
-                                <strong>[${idOrBadge}]</strong> ${personName} <span style="color: var(--text-muted);">(${titleOrRank})</span>
-                            </label>
-                        `;
-                        container.appendChild(itemDiv);
-                    });
-                }
-            } catch (e) {
-                container.innerHTML = '<span style="color: #ef4444; font-size: 0.85rem;">❌ Failed to load personnel</span>';
-            }
-        }
-
-        function onTemplateChange() {
-            const template = document.getElementById('cert-template').value;
-            const isGov = template.startsWith('Gov Office');
-            document.getElementById('lbl-rank').innerText = isGov ? 'Position / Title' : 'Rank';
-            document.getElementById('lbl-id').innerText = isGov ? 'ID Serial No' : 'Badge Serial No';
-            
-            document.getElementById('cert-name').value = '';
-            document.getElementById('cert-title').value = '';
-            document.getElementById('cert-id').value = '';
-
-            loadPersonnelCheckboxes();
-        }
-
-        function onPersonnelSelect() {
-            const checkedBoxes = Array.from(document.querySelectorAll('.person-checkbox:checked'));
-
-            if (checkedBoxes.length === 0) {
-                document.getElementById('cert-name').value = '';
-                document.getElementById('cert-title').value = '';
-                document.getElementById('cert-id').value = '';
-                return;
-            }
-
-            if (checkedBoxes.length > 1) {
-                document.getElementById('cert-name').value = `[Batch Mode: ${checkedBoxes.length} Personnel Selected]`;
-                document.getElementById('cert-title').value = `[Multiple Ranks/Titles]`;
-                document.getElementById('cert-id').value = `[Multiple Badge/IDs]`;
-                return;
-            }
-
-            const person = currentPersonnelList[checkedBoxes[0].value];
-            if (!person) return;
-
-            const isGov = document.getElementById('cert-template').value.startsWith('Gov Office');
-
-            const idVal = isGov ? person.id : person.badge;
-            const titleVal = isGov ? person.position : person.rank;
-
-            document.getElementById('cert-id').value = idVal || '';
-            document.getElementById('cert-title').value = titleVal || '';
-            document.getElementById('cert-name').value = person.name ? person.name : titleVal;
-        }
-
-        async function handleGenerateCertificate(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-generate-cert');
-            const statusDiv = document.getElementById('cert-status-msg');
-            const checkedBoxes = Array.from(document.querySelectorAll('.person-checkbox:checked'));
-
-            if (checkedBoxes.length === 0) {
-                statusDiv.style.color = '#ef4444';
-                statusDiv.innerText = '❌ Please select at least one personnel member from the list.';
-                return;
-            }
-
-            const reason = document.getElementById('cert-reason').value.trim();
-            const template = document.getElementById('cert-template').value;
-            const isGov = template.startsWith('Gov Office');
-
-            const isSingleMode = checkedBoxes.length === 1;
-            const customName = document.getElementById('cert-name').value.trim();
-            const customTitle = document.getElementById('cert-title').value.trim();
-            const customId = document.getElementById('cert-id').value.trim();
-
-            btn.disabled = true;
-            let successCount = 0;
-            let failCount = 0;
-
-            for (let i = 0; i < checkedBoxes.length; i++) {
-                const index = checkedBoxes[i].value;
-                const person = currentPersonnelList[index];
-                if (!person) continue;
-
-                const defaultName = person.name ? person.name : (isGov ? person.position : person.rank);
-                const defaultTitle = isGov ? person.position : person.rank;
-                const defaultId = isGov ? person.id : person.badge;
-
-                const pName = (isSingleMode && customName && !customName.startsWith('[Batch')) ? customName : defaultName;
-                const pTitle = (isSingleMode && customTitle && !customTitle.startsWith('[Multiple')) ? customTitle : defaultTitle;
-                const pId = (isSingleMode && customId && !customId.startsWith('[Multiple')) ? customId : defaultId;
-
-                statusDiv.style.color = '#60a5fa';
-                statusDiv.innerText = `⏳ Generating (${i + 1}/${checkedBoxes.length}): ${pName}...`;
-
-                const payload = {
-                    template: template,
-                    name: pName,
-                    title: pTitle,
-                    idNo: pId,
-                    reason: reason
-                };
-
-                try {
-                    const res = await apiFetch('/api/certificates/generate', {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await res.json();
-                    if (res.ok && result.status === 'success') {
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
-                } catch (err) {
-                    failCount++;
-                }
-
-                if (i < checkedBoxes.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                }
-            }
-
-            btn.disabled = false;
-            document.getElementById('cert-reason').value = '';
-            loadCertificates();
-
-            if (failCount === 0) {
-                statusDiv.style.color = '#10b981';
-                statusDiv.innerText = `✅ Successfully issued ${successCount} certificate(s)!`;
-            } else {
-                statusDiv.style.color = '#f59e0b';
-                statusDiv.innerText = `⚠️ Issued ${successCount} certificate(s), but ${failCount} failed.`;
             }
         }
 
