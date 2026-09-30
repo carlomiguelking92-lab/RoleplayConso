@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Region IX - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Added jsPDF and jsPDF-AutoTable for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -208,7 +207,6 @@
         .btn-warning { background-color: var(--accent-gold); color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.78rem; font-weight: 700; white-space: nowrap; display: inline-block; }
         .btn-warning:hover { background-color: #d97706; }
 
-        .search-bar { background-color: #0f172a; border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; width: 260px; box-sizing: border-box; }
         .badge-ref { background: rgba(37, 99, 235, 0.2); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-family: monospace; white-space: nowrap; display: inline-block; }
         .status-msg { margin-top: 10px; font-size: 0.9rem; font-weight: 600; }
 
@@ -564,39 +562,25 @@
                         <button class="tab-btn" id="btn-sal-tab-pnp" onclick="setSalarySubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Salaries</button>
                         <button class="tab-btn" id="btn-sal-tab-gov" onclick="setSalarySubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Salaries</button>
                         
-                        <!-- Added Export CSV and Export PDF Buttons -->
-                        <button class="btn-success" onclick="exportSalaryCSV()" style="height: 38px; font-weight: 700;">
-                            <i class="fa-solid fa-file-csv"></i> Export CSV
+                        <button id="btn-export-csv" class="btn-success" onclick="exportSalaryCSV()" style="height: 38px; font-weight: 700;">
+                            <i class="fa-solid fa-paper-plane"></i> Dispatch CSV to Accounting
                         </button>
-                        <button class="btn-primary" onclick="exportSalaryPDF()" style="height: 38px; font-weight: 700;">
-                            <i class="fa-solid fa-file-pdf"></i> Export PDF
-                        </button>
-
-                        <button id="btn-webhook-unpaid" class="btn-warning" onclick="sendUnpaidSummaryWebhook()" style="height: 38px; font-weight: 700; display: none;">
-                            <i class="fa-solid fa-paper-plane"></i> Send Unpaid & Balance Webhook
+                        <button id="btn-export-pdf" class="btn-primary" onclick="exportSalaryPDF()" style="height: 38px; font-weight: 700;">
+                            <i class="fa-solid fa-paper-plane"></i> Dispatch PDF to Accounting
                         </button>
                     </div>
                 </div>
 
                 <div class="card" id="card-treasury-control" style="border: 1px solid var(--accent-gold); display: none;">
-                    <h3><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Treasury Pool & Saturday Automation Controls</h3>
+                    <h3><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Treasury Pool Balance</h3>
                     
                     <div class="inline-form-responsive" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 14px;">
                         <div class="form-group" style="flex: 1; min-width: 220px;">
-                            <label for="treasury-amount-input">Current Treasury Balance (₱)</label>
+                            <label for="treasury-amount-input">Current Treasury Balance (PHP)</label>
                             <input type="number" step="0.01" id="treasury-amount-input" class="form-control" placeholder="0.00" />
                         </div>
                         <button type="button" class="btn-success" onclick="updateTreasuryBalance()" style="height: 42px; font-size: 0.88rem; padding: 0 16px;">
                             <i class="fa-solid fa-floppy-disk"></i> Update Treasury Pool
-                        </button>
-                    </div>
-
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 14px;">
-                        <button type="button" class="btn-primary" onclick="runPreReleaseCheck()">
-                            <i class="fa-solid fa-clipboard-check"></i> Run Saturday Pre-Disbursement Check
-                        </button>
-                        <button type="button" class="btn-warning" onclick="runTransparencyReport()">
-                            <i class="fa-solid fa-file-invoice-dollar"></i> Publish Saturday Transparency Report
                         </button>
                     </div>
                     <div id="treasury-status-msg" class="status-msg"></div>
@@ -605,15 +589,15 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-blue);"><i class="fa-solid fa-wallet"></i></div>
-                        <div class="metric-data"><h3 id="stat-total-base">₱0.00</h3><p id="stat-lbl-base">Total Base Salary</p></div>
+                        <div class="metric-data"><h3 id="stat-total-base">PHP 0.00</h3><p id="stat-lbl-base">Total Base Salary</p></div>
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(245, 158, 11, 0.2); color: var(--accent-gold);"><i class="fa-solid fa-gift"></i></div>
-                        <div class="metric-data"><h3 id="stat-total-incentives">₱0.00</h3><p id="stat-lbl-inc">Total Incentives</p></div>
+                        <div class="metric-data"><h3 id="stat-total-incentives">PHP 0.00</h3><p id="stat-lbl-inc">Total Incentives</p></div>
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(16, 185, 129, 0.2); color: var(--accent-green);"><i class="fa-solid fa-calendar-week"></i></div>
-                        <div class="metric-data"><h3 id="stat-total-weekly">₱0.00</h3><p id="stat-lbl-weekly">Total Weekly Gross</p></div>
+                        <div class="metric-data"><h3 id="stat-total-weekly">PHP 0.00</h3><p id="stat-lbl-weekly">Total Weekly Gross</p></div>
                     </div>
                 </div>
 
@@ -652,12 +636,12 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="sal-base">Base Salary (₱)</label>
+                                <label for="sal-base">Base Salary (PHP)</label>
                                 <input type="number" step="0.01" id="sal-base" class="form-control" placeholder="120000.00" required />
                             </div>
 
                             <div class="form-group">
-                                <label for="sal-incentives">Incentives (₱)</label>
+                                <label for="sal-incentives">Incentives (PHP)</label>
                                 <input type="number" step="0.01" id="sal-incentives" class="form-control" value="0.00" required />
                             </div>
                         </div>
@@ -696,19 +680,19 @@
                         <div class="salary-summary-banner">
                             <div class="summary-box">
                                 <span>Total Full Weekly Cap</span>
-                                <strong id="pnp-sum-full-cap" style="color: var(--accent-gold);">₱0.00</strong>
+                                <strong id="pnp-sum-full-cap" style="color: var(--accent-gold);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Total Weekly Gross</span>
-                                <strong id="pnp-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
+                                <strong id="pnp-sum-total-wk" style="color: var(--accent-blue);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Total Disbursed (Paid)</span>
-                                <strong id="pnp-sum-paid" style="color: var(--accent-green);">₱0.00</strong>
+                                <strong id="pnp-sum-paid" style="color: var(--accent-green);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Remaining Unpaid Balance</span>
-                                <strong id="pnp-sum-unpaid" style="color: var(--accent-red);">₱0.00</strong>
+                                <strong id="pnp-sum-unpaid" style="color: var(--accent-red);">PHP 0.00</strong>
                             </div>
                         </div>
                     </div>
@@ -743,19 +727,19 @@
                         <div class="salary-summary-banner">
                             <div class="summary-box">
                                 <span>Total Full Weekly Cap</span>
-                                <strong id="gov-sum-full-cap" style="color: var(--accent-gold);">₱0.00</strong>
+                                <strong id="gov-sum-full-cap" style="color: var(--accent-gold);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Total Weekly Gross</span>
-                                <strong id="gov-sum-total-wk" style="color: var(--accent-blue);">₱0.00</strong>
+                                <strong id="gov-sum-total-wk" style="color: var(--accent-blue);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Total Disbursed (Paid)</span>
-                                <strong id="gov-sum-paid" style="color: var(--accent-green);">₱0.00</strong>
+                                <strong id="gov-sum-paid" style="color: var(--accent-green);">PHP 0.00</strong>
                             </div>
                             <div class="summary-box">
                                 <span>Remaining Unpaid Balance</span>
-                                <strong id="gov-sum-unpaid" style="color: var(--accent-red);">₱0.00</strong>
+                                <strong id="gov-sum-unpaid" style="color: var(--accent-red);">PHP 0.00</strong>
                             </div>
                         </div>
                     </div>
@@ -766,26 +750,25 @@
                     <div class="salary-summary-banner">
                         <div class="summary-box">
                             <span>Total Full Weekly Cap</span>
-                            <strong id="grand-full-cap-total" style="color: var(--accent-gold);">₱0.00</strong>
+                            <strong id="grand-full-cap-total" style="color: var(--accent-gold);">PHP 0.00</strong>
                         </div>
                         <div class="summary-box">
                             <span>Total Gross Weekly Salary</span>
-                            <strong id="grand-gross-total" style="color: var(--accent-blue);">₱0.00</strong>
+                            <strong id="grand-gross-total" style="color: var(--accent-blue);">PHP 0.00</strong>
                         </div>
                         <div class="summary-box">
                             <span>Total Disbursed (Paid)</span>
-                            <strong id="grand-paid-total" style="color: var(--accent-green);">₱0.00</strong>
+                            <strong id="grand-paid-total" style="color: var(--accent-green);">PHP 0.00</strong>
                         </div>
                         <div class="summary-box">
                             <span>Total Remaining Unpaid</span>
-                            <strong id="grand-unpaid-total" style="color: var(--accent-red);">₱0.00</strong>
+                            <strong id="grand-unpaid-total" style="color: var(--accent-red);">PHP 0.00</strong>
                         </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- ATTENDANCE & NO WORK NO PAY TAB (STRUCTURED LIKE SALARY TRACKER) -->
             <div id="view-nowork-nopay" class="view-section">
                 <div class="header">
                     <div>
@@ -807,15 +790,14 @@
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(239, 68, 68, 0.2); color: var(--accent-red);"><i class="fa-solid fa-user-xmark"></i></div>
-                        <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p id="nowork-lbl-inactive">Inactive Personnel (0 Days / ₱0)</p></div>
+                        <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p id="nowork-lbl-inactive">Inactive Personnel (0 Days / PHP 0)</p></div>
                     </div>
                     <div class="metric-card">
                         <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-sack-dollar);"><i class="fa-solid fa-sack-dollar"></i></div>
-                        <div class="metric-data"><h3 id="nowork-total-payroll">₱0.00</h3><p id="nowork-lbl-payroll">Total Payroll Due</p></div>
+                        <div class="metric-data"><h3 id="nowork-total-payroll">PHP 0.00</h3><p id="nowork-lbl-payroll">Total Payroll Due</p></div>
                     </div>
                 </div>
 
-                <!-- PNP Attendance Card -->
                 <div class="card" id="nowork-card-pnp">
                     <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-user-shield"></i> PNP Attendance & Pro-Rated Payroll Roster</h3>
                     <div class="table-responsive" style="margin-top: 16px;">
@@ -840,7 +822,6 @@
                     </div>
                 </div>
 
-                <!-- Government Attendance Card -->
                 <div class="card" id="nowork-card-gov">
                     <h3 style="color: var(--accent-green);"><i class="fa-solid fa-landmark"></i> Government Attendance & Pro-Rated Payroll Roster</h3>
                     <div class="table-responsive" style="margin-top: 16px;">
@@ -966,6 +947,261 @@
             return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
         }
 
+        function parseCurrency(str) {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        function formatCurrency(num) {
+            return 'PHP ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getExportSalaryData() {
+            if (!rawSalariesCache || !rawSalariesCache.length) return [];
+
+            return rawSalariesCache.filter(item => {
+                const dept = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+                if (currentSalarySubView === 'PNP') return dept === 'PNP';
+                if (currentSalarySubView === 'GOV') return dept === 'GOV';
+                return true;
+            }).map(s => {
+                const b = parseCurrency(s.salary || s.baseSalary);
+                const fullWk = b / 4.0;
+                const days = s.daysAttended || s.days_attended || (s.days !== undefined ? s.days : 0);
+                const isGen = (s.title || '').toLowerCase() === 'police general';
+                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
+                const i = parseCurrency(s.incentives);
+                const tw = proRatedBase + i;
+                const dept = (s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+
+                return {
+                    badge: s.badge_id || s.badgeId || s.id || 'N/A',
+                    department: dept,
+                    title: s.title || 'N/A',
+                    name: s.name || 'N/A',
+                    baseSalary: b,
+                    fullWeekly: fullWk,
+                    proRatedBase: proRatedBase,
+                    incentives: i,
+                    totalWeekly: tw,
+                    status: (s.status || 'unpaid').toUpperCase()
+                };
+            });
+        }
+
+        async function sendReportToAccountingChannel(fileBlob, filename, fileType) {
+            const formData = new FormData();
+            formData.append('file', fileBlob, filename);
+            formData.append('filterView', currentSalarySubView);
+            formData.append('fileType', fileType);
+            formData.append('dispatchedBy', localStorage.getItem('username') || 'Admin');
+
+            const token = localStorage.getItem('staffToken');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/salary/upload-report`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && (data.status === 'success' || data.success)) {
+                    alert(`✅ ${fileType.toUpperCase()} Report (${filename}) successfully dispatched to Accounting channel!`);
+                } else {
+                    alert(`❌ Failed to send file to Discord Accounting channel: ${data.message || 'Server error'}`);
+                }
+            } catch (err) {
+                console.error("Upload report error:", err);
+                alert("❌ Connection error while sending file to Accounting channel.");
+            }
+        }
+
+        async function exportSalaryCSV() {
+            const btn = document.getElementById('btn-export-csv');
+            const data = getExportSalaryData();
+            if (!data.length) {
+                alert("⚠️ No salary data available to export.");
+                return;
+            }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching CSV...';
+
+        try {
+            const headers = [
+                "Badge/ID",
+                "Department",
+                "Title / Rank",
+                "Name",
+                "Base Salary",
+                "Full Weekly Cap",
+                "Pro-Rated Base",
+                "Incentives",
+                "Total Weekly Payable",
+                "Payment Status"
+            ];
+
+            const csvRows = [headers.join(',')];
+
+            let sumBase = 0;
+            let sumFullWk = 0;
+            let sumProRated = 0;
+            let sumInc = 0;
+            let sumTotalWk = 0;
+
+            // Data Rows: Pure numbers without inner commas to prevent CSV column breaking
+            data.forEach(item => {
+                sumBase += item.baseSalary;
+                sumFullWk += item.fullWeekly;
+                sumProRated += item.proRatedBase;
+                sumInc += item.incentives;
+                sumTotalWk += item.totalWeekly;
+
+                const row = [
+                    `"${item.badge}"`,
+                    `"${item.department}"`,
+                    `"${item.title.replace(/"/g, '""')}"`,
+                    `"${item.name.replace(/"/g, '""')}"`,
+                    item.baseSalary.toFixed(2),
+                    item.fullWeekly.toFixed(2),
+                    item.proRatedBase.toFixed(2),
+                    item.incentives.toFixed(2),
+                    item.totalWeekly.toFixed(2),
+                    `"${item.status}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            // Blank line before totals
+            csvRows.push('');
+
+            // Clean Summary Row
+            const summaryRow = [
+                `"TOTALS (${data.length} Personnel)"`,
+                `""`,
+                `""`,
+                `""`,
+                sumBase.toFixed(2),
+                sumFullWk.toFixed(2),
+                sumProRated.toFixed(2),
+                sumInc.toFixed(2),
+                sumTotalWk.toFixed(2),
+                `""`
+            ];
+            csvRows.push(summaryRow.join(','));
+
+            const csvString = csvRows.join('\r\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.csv`;
+
+            await sendReportToAccountingChannel(blob, filename, 'csv');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Dispatch CSV to Accounting';
+        }
+    }
+
+        async function exportSalaryPDF() {
+            const btn = document.getElementById('btn-export-pdf');
+            const data = getExportSalaryData();
+            if (!data.length) {
+                alert("⚠️ No salary data available to export.");
+                return;
+            }
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ PDF library failed to load. Please check your internet connection.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching PDF...';
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+                doc.setFontSize(15);
+                doc.setTextColor(37, 99, 235);
+                doc.text("REGION IX - SALARY DISBURSEMENT REPORT", 14, 14);
+
+                doc.setFontSize(9);
+                doc.setTextColor(100);
+                const subTitle = `Filter: ${currentSalarySubView} | Generated On: ${new Date().toLocaleString()} | Exported By: ${localStorage.getItem('username') || 'Admin'}`;
+                doc.text(subTitle, 14, 20);
+
+                const tableHeaders = [["Badge/ID", "Dept", "Title / Rank", "Name", "Base Salary", "Weekly Cap", "Pro-Rated Base", "Incentives", "Total Payable", "Status"]];
+                
+                const tableData = data.map(item => [
+                    item.badge,
+                    item.department,
+                    item.title,
+                    item.name,
+                    formatCurrency(item.baseSalary),
+                    formatCurrency(item.fullWeekly),
+                    formatCurrency(item.proRatedBase),
+                    formatCurrency(item.incentives),
+                    formatCurrency(item.totalWeekly),
+                    item.status
+                ]);
+
+                doc.autoTable({
+                    head: tableHeaders,
+                    body: tableData,
+                    startY: 24,
+                    margin: { left: 14, right: 14 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+                    alternateRowStyles: { fillColor: [240, 243, 248] },
+                    styles: { fontSize: 7.5, cellPadding: 2, overflow: 'linebreak' },
+                    columnStyles: {
+                        0: { cellWidth: 22 },
+                        1: { cellWidth: 14, halign: 'center' },
+                        2: { cellWidth: 42 },
+                        3: { cellWidth: 30 },
+                        4: { cellWidth: 27, halign: 'right' },
+                        5: { cellWidth: 27, halign: 'right' },
+                        6: { cellWidth: 28, halign: 'right' },
+                        7: { cellWidth: 24, halign: 'right' },
+                        8: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
+                        9: { cellWidth: 22, halign: 'center' }
+                    }
+                });
+
+                const totalDisbursed = data.filter(d => d.status === 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
+                const totalUnpaid = data.filter(d => d.status !== 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
+                const totalGross = totalDisbursed + totalUnpaid;
+
+                let finalY = doc.lastAutoTable.finalY + 8;
+                if (finalY > 185) {
+                    doc.addPage();
+                    finalY = 20;
+                }
+
+                doc.setFontSize(9);
+                doc.setTextColor(15, 23, 42);
+                doc.setFont(undefined, 'bold');
+                doc.text(`Total Gross Payroll: ${formatCurrency(totalGross)}`, 14, finalY);
+                doc.text(`Total Disbursed (Paid): ${formatCurrency(totalDisbursed)}`, 105, finalY);
+                doc.text(`Remaining Unpaid Balance: ${formatCurrency(totalUnpaid)}`, 190, finalY);
+
+                const blob = doc.output('blob');
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const filename = `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.pdf`;
+
+                await sendReportToAccountingChannel(blob, filename, 'pdf');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Dispatch PDF to Accounting';
+            }
+        }
+
         function initChartIfNeeded() {
             if (dutyChart) return;
             const canvas = document.getElementById('dutyChart');
@@ -987,16 +1223,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#9ca3af',
-                                font: { size: 12, family: "'Segoe UI', sans-serif" },
-                                padding: 16,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 12 }, padding: 16, usePointStyle: true } }
                     },
                     cutout: '72%'
                 }
@@ -1079,7 +1306,7 @@
                         const statusVal = (item.status || 'unpaid').toLowerCase();
                         let statusBadge = '';
                         if (days === 0 && !isGen) {
-                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (₱0.00)</span>';
+                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (PHP 0.00)</span>';
                         } else if (statusVal === 'paid') {
                             statusBadge = '<span class="status-dropdown paid" style="display:inline-block; text-align:center; padding:4px 8px;">PAID</span>';
                         } else {
@@ -1114,15 +1341,15 @@
 
                 if (currentNoWorkSubView === 'PNP') {
                     document.getElementById('nowork-lbl-active').innerText = 'Active Officers (1+ Days)';
-                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Officers (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Officers (0 Days / PHP 0)';
                     document.getElementById('nowork-lbl-payroll').innerText = 'PNP Total Payroll Due';
                 } else if (currentNoWorkSubView === 'GOV') {
                     document.getElementById('nowork-lbl-active').innerText = 'Active Gov Staff (1+ Days)';
-                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Gov Staff (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Gov Staff (0 Days / PHP 0)';
                     document.getElementById('nowork-lbl-payroll').innerText = 'Gov Total Payroll Due';
                 } else {
                     document.getElementById('nowork-lbl-active').innerText = 'Active Personnel (1+ Days)';
-                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Personnel (0 Days / ₱0)';
+                    document.getElementById('nowork-lbl-inactive').innerText = 'Inactive Personnel (0 Days / PHP 0)';
                     document.getElementById('nowork-lbl-payroll').innerText = 'Total Combined Payroll Due';
                 }
 
@@ -1343,67 +1570,6 @@
             }
         }
 
-        async function runPreReleaseCheck() {
-            const msgDiv = document.getElementById('treasury-status-msg');
-            msgDiv.style.color = '#60a5fa';
-            msgDiv.innerText = '⏳ Running Pre-Disbursement balance check...';
-
-            try {
-                const res = await apiFetch('/api/salary/pre-release-check', { method: 'POST' });
-                if (res.ok) {
-                    msgDiv.style.color = '#10b981';
-                    msgDiv.innerText = '✅ Saturday Pre-Disbursement report sent to Discord!';
-                } else {
-                    msgDiv.style.color = '#ef4444';
-                    msgDiv.innerText = '❌ Failed to run pre-release check.';
-                }
-            } catch (err) {
-                msgDiv.style.color = '#ef4444';
-                msgDiv.innerText = '❌ Network error executing pre-release check.';
-            }
-        }
-
-        async function runTransparencyReport() {
-            const msgDiv = document.getElementById('treasury-status-msg');
-            msgDiv.style.color = '#60a5fa';
-            msgDiv.innerText = '⏳ Publishing Saturday Transparency Report & resetting payment statuses...';
-
-            try {
-                const res = await apiFetch('/api/salary/transparency-report', { method: 'POST' });
-                if (res.ok) {
-                    msgDiv.style.color = '#10b981';
-                    msgDiv.innerText = '✅ Transparency Report published & salary statuses reset to unpaid!';
-            
-                    if (Array.isArray(rawSalariesCache)) {
-                        rawSalariesCache = rawSalariesCache.map(item => ({
-                            ...item,
-                            status: 'unpaid'
-                        }));
-                        renderSalaryTables();
-                    }
-
-                    fetchTreasuryData();
-                    await fetchSalaryData();
-                } else {
-                    msgDiv.style.color = '#ef4444';
-                    msgDiv.innerText = '❌ Failed to publish transparency report.';
-                }
-            } catch (err) {
-                msgDiv.style.color = '#ef4444';
-                msgDiv.innerText = '❌ Network error publishing transparency report.';
-            }
-        }
-
-        function parseCurrency(str) {
-            if (!str) return 0;
-            if (typeof str === 'number') return str;
-            return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
-        }
-
-        function formatCurrency(num) {
-            return '₱' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
         async function updateSalaryStatus(selectElement, recordKey, actionType) {
             const item = rawSalariesCache.find(s => (s.badge_id == recordKey || s.badgeId == recordKey || s.id == recordKey));
 
@@ -1498,63 +1664,6 @@
             } catch (err) {
                 console.error('Delete salary error:', err);
                 alert('❌ Connection error while deleting salary record.');
-            }
-        }
-
-        async function sendUnpaidSummaryWebhook() {
-            const unpaidPersonnel = rawSalariesCache
-                .filter(s => {
-                    const isUnpaid = !s.status || s.status.toLowerCase() === 'unpaid';
-                    return isUnpaid;
-                })
-                .map(s => ({
-                    badgeId: s.badge_id || s.badgeId || 'N/A',
-                    name: s.name || 'N/A',
-                    title: s.title || 'N/A',
-                    department: s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP'),
-                    weeklyAmount: formatCurrency(s.computedTotalWk || parseCurrency(s.totalWk || s.totalPerWeek))
-                }));
-
-            let remainingBalance = '₱0.00';
-            if (currentSalarySubView === 'PNP') {
-                remainingBalance = document.getElementById('pnp-sum-unpaid').innerText;
-            } else if (currentSalarySubView === 'GOV') {
-                remainingBalance = document.getElementById('gov-sum-unpaid').innerText;
-            } else {
-                remainingBalance = document.getElementById('grand-unpaid-total').innerText;
-            }
-
-            if (unpaidPersonnel.length === 0) {
-                alert("ℹ️ There are currently no unpaid personnel to report.");
-                return;
-            }
-
-            const payload = {
-                event: 'UNPAID_SALARY_SUMMARY',
-                viewFilter: currentSalarySubView,
-                timestamp: new Date().toISOString(),
-                totalUnpaidCount: unpaidPersonnel.length,
-                remainingUnpaidBalance: remainingBalance,
-                unpaidUsers: unpaidPersonnel,
-                triggeredBy: localStorage.getItem('username') || 'Admin'
-            };
-
-            try {
-                const res = await apiFetch('/api/salary/webhook-unpaid', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json().catch(() => ({}));
-
-                if (res.ok && (data.status === 'success' || data.success)) {
-                    alert(`✅ Webhook sent successfully! Reported ${unpaidPersonnel.length} unpaid personnel and balance of ${remainingBalance}.`);
-                } else {
-                    alert(`❌ Server error: ${data.message || 'Failed to dispatch report to Discord.'}`);
-                }
-            } catch (err) {
-                console.error("Webhook error:", err);
-                alert('❌ Network error sending webhook.');
             }
         }
 
@@ -1729,158 +1838,6 @@
                 document.getElementById('stat-total-incentives').innerText = formatCurrency(pnpInc + govInc);
                 document.getElementById('stat-total-weekly').innerText = formatCurrency(grandUnpaid);
             }
-        }
-
-        // ==========================================
-        // EXPORT CSV & PDF FUNCTIONS IMPLEMENTATION
-        // ==========================================
-
-        function getExportSalaryData() {
-            if (!rawSalariesCache || !rawSalariesCache.length) return [];
-
-            return rawSalariesCache.filter(item => {
-                const dept = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
-                if (currentSalarySubView === 'PNP') return dept === 'PNP';
-                if (currentSalarySubView === 'GOV') return dept === 'GOV';
-                return true;
-            }).map(s => {
-                const b = parseCurrency(s.salary || s.baseSalary);
-                const fullWk = b / 4.0;
-                const days = s.daysAttended || s.days_attended || (s.days !== undefined ? s.days : 0);
-                const isGen = (s.title || '').toLowerCase() === 'police general';
-                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
-                const i = parseCurrency(s.incentives);
-                const tw = proRatedBase + i;
-                const dept = (s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
-
-                return {
-                    badge: s.badge_id || s.badgeId || s.id || 'N/A',
-                    department: dept,
-                    title: s.title || 'N/A',
-                    name: s.name || 'N/A',
-                    baseSalary: b,
-                    fullWeekly: fullWk,
-                    proRatedBase: proRatedBase,
-                    incentives: i,
-                    totalWeekly: tw,
-                    status: (s.status || 'unpaid').toUpperCase()
-                };
-            });
-        }
-
-        function exportSalaryCSV() {
-            const data = getExportSalaryData();
-            if (!data.length) {
-                alert("⚠️ No salary data available to export.");
-                return;
-            }
-
-            const headers = ["Badge/ID", "Department", "Title/Rank", "Name", "Base Salary", "Full Weekly Cap", "Pro-Rated Base", "Incentives", "Total Weekly", "Status"];
-            const csvRows = [headers.join(',')];
-
-            data.forEach(item => {
-                const row = [
-                    `"${item.badge}"`,
-                    `"${item.department}"`,
-                    `"${item.title.replace(/"/g, '""')}"`,
-                    `"${item.name.replace(/"/g, '""')}"`,
-                    item.baseSalary.toFixed(2),
-                    item.fullWeekly.toFixed(2),
-                    item.proRatedBase.toFixed(2),
-                    item.incentives.toFixed(2),
-                    item.totalWeekly.toFixed(2),
-                    `"${item.status}"`
-                ];
-                csvRows.push(row.join(','));
-            });
-
-            const csvString = csvRows.join('\n');
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            
-            const timestamp = new Date().toISOString().slice(0, 10);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportSalaryPDF() {
-            const data = getExportSalaryData();
-            if (!data.length) {
-                alert("⚠️ No salary data available to export.");
-                return;
-            }
-
-            if (!window.jspdf || !window.jspdf.jsPDF) {
-                alert("❌ PDF library failed to load. Please check your internet connection.");
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-            // Title & Header Information
-            doc.setFontSize(16);
-            doc.setTextColor(37, 99, 235);
-            doc.text("REGION IX - SALARY DISBURSEMENT REPORT", 14, 15);
-
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            const subTitle = `Filter: ${currentSalarySubView} | Generated On: ${new Date().toLocaleString()} | Exported By: ${localStorage.getItem('username') || 'Admin'}`;
-            doc.text(subTitle, 14, 21);
-
-            const tableHeaders = [["Badge/ID", "Dept", "Title / Rank", "Name", "Base Salary", "Weekly Cap", "Pro-Rated Base", "Incentives", "Total Payable", "Status"]];
-            
-            const tableData = data.map(item => [
-                item.badge,
-                item.department,
-                item.title,
-                item.name,
-                formatCurrency(item.baseSalary),
-                formatCurrency(item.fullWeekly),
-                formatCurrency(item.proRatedBase),
-                formatCurrency(item.incentives),
-                formatCurrency(item.totalWeekly),
-                item.status
-            ]);
-
-            // Render PDF Table
-            doc.autoTable({
-                head: tableHeaders,
-                body: tableData,
-                startY: 26,
-                theme: 'grid',
-                headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [240, 243, 248] },
-                styles: { fontSize: 8, cellPadding: 3 },
-                columnStyles: {
-                    4: { halign: 'right' },
-                    5: { halign: 'right' },
-                    6: { halign: 'right' },
-                    7: { halign: 'right' },
-                    8: { halign: 'right', fontStyle: 'bold' },
-                    9: { halign: 'center' }
-                }
-            });
-
-            // Calculate Totals for Footer Summary
-            const totalDisbursed = data.filter(d => d.status === 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
-            const totalUnpaid = data.filter(d => d.status !== 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
-            const totalGross = totalDisbursed + totalUnpaid;
-
-            const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(10);
-            doc.setTextColor(15, 23, 42);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Total Gross Payroll: ${formatCurrency(totalGross)}`, 14, finalY);
-            doc.text(`Total Disbursed (Paid): ${formatCurrency(totalDisbursed)}`, 110, finalY);
-            doc.text(`Remaining Unpaid Balance: ${formatCurrency(totalUnpaid)}`, 200, finalY);
-
-            const timestamp = new Date().toISOString().slice(0, 10);
-            doc.save(`RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.pdf`);
         }
 
         async function handleSaveSalary(e) {
@@ -2190,10 +2147,7 @@
             document.getElementById('card-add-officer').style.display = 'none';
             document.getElementById('card-add-gov').style.display = 'none';
 
-            const webhookBtn = document.getElementById('btn-webhook-unpaid');
             const treasuryCard = document.getElementById('card-treasury-control');
-            
-            if (webhookBtn) webhookBtn.style.display = 'none';
             if (treasuryCard) treasuryCard.style.display = 'none';
 
             if (status !== 'APPROVED' && role !== 'SUPER_ADMIN') {
@@ -2204,13 +2158,11 @@
                 document.getElementById('nav-users').style.display = 'flex';
                 document.getElementById('card-add-officer').style.display = 'block';
                 document.getElementById('card-add-gov').style.display = 'block';
-                if (webhookBtn) webhookBtn.style.display = 'inline-block';
                 if (treasuryCard) treasuryCard.style.display = 'block';
                 return;
             }
 
             if (role === 'ADMIN') {
-                if (webhookBtn) webhookBtn.style.display = 'inline-block';
                 if (treasuryCard) treasuryCard.style.display = 'block';
                 if (dept === 'GOV') {
                     document.getElementById('nav-officers').style.display = 'none';
