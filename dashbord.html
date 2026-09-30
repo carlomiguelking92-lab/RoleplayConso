@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Region IX - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Added jsPDF and jsPDF-AutoTable for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -561,6 +564,14 @@
                         <button class="tab-btn" id="btn-sal-tab-pnp" onclick="setSalarySubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Salaries</button>
                         <button class="tab-btn" id="btn-sal-tab-gov" onclick="setSalarySubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Salaries</button>
                         
+                        <!-- Added Export CSV and Export PDF Buttons -->
+                        <button class="btn-success" onclick="exportSalaryCSV()" style="height: 38px; font-weight: 700;">
+                            <i class="fa-solid fa-file-csv"></i> Export CSV
+                        </button>
+                        <button class="btn-primary" onclick="exportSalaryPDF()" style="height: 38px; font-weight: 700;">
+                            <i class="fa-solid fa-file-pdf"></i> Export PDF
+                        </button>
+
                         <button id="btn-webhook-unpaid" class="btn-warning" onclick="sendUnpaidSummaryWebhook()" style="height: 38px; font-weight: 700; display: none;">
                             <i class="fa-solid fa-paper-plane"></i> Send Unpaid & Balance Webhook
                         </button>
@@ -1718,6 +1729,158 @@
                 document.getElementById('stat-total-incentives').innerText = formatCurrency(pnpInc + govInc);
                 document.getElementById('stat-total-weekly').innerText = formatCurrency(grandUnpaid);
             }
+        }
+
+        // ==========================================
+        // EXPORT CSV & PDF FUNCTIONS IMPLEMENTATION
+        // ==========================================
+
+        function getExportSalaryData() {
+            if (!rawSalariesCache || !rawSalariesCache.length) return [];
+
+            return rawSalariesCache.filter(item => {
+                const dept = (item.department || (item.badge_id && String(item.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+                if (currentSalarySubView === 'PNP') return dept === 'PNP';
+                if (currentSalarySubView === 'GOV') return dept === 'GOV';
+                return true;
+            }).map(s => {
+                const b = parseCurrency(s.salary || s.baseSalary);
+                const fullWk = b / 4.0;
+                const days = s.daysAttended || s.days_attended || (s.days !== undefined ? s.days : 0);
+                const isGen = (s.title || '').toLowerCase() === 'police general';
+                const proRatedBase = isGen ? fullWk : (fullWk / 7.0) * Math.min(7, days);
+                const i = parseCurrency(s.incentives);
+                const tw = proRatedBase + i;
+                const dept = (s.department || (s.badge_id && String(s.badge_id).startsWith('GO') ? 'GOV' : 'PNP')).toUpperCase();
+
+                return {
+                    badge: s.badge_id || s.badgeId || s.id || 'N/A',
+                    department: dept,
+                    title: s.title || 'N/A',
+                    name: s.name || 'N/A',
+                    baseSalary: b,
+                    fullWeekly: fullWk,
+                    proRatedBase: proRatedBase,
+                    incentives: i,
+                    totalWeekly: tw,
+                    status: (s.status || 'unpaid').toUpperCase()
+                };
+            });
+        }
+
+        function exportSalaryCSV() {
+            const data = getExportSalaryData();
+            if (!data.length) {
+                alert("⚠️ No salary data available to export.");
+                return;
+            }
+
+            const headers = ["Badge/ID", "Department", "Title/Rank", "Name", "Base Salary", "Full Weekly Cap", "Pro-Rated Base", "Incentives", "Total Weekly", "Status"];
+            const csvRows = [headers.join(',')];
+
+            data.forEach(item => {
+                const row = [
+                    `"${item.badge}"`,
+                    `"${item.department}"`,
+                    `"${item.title.replace(/"/g, '""')}"`,
+                    `"${item.name.replace(/"/g, '""')}"`,
+                    item.baseSalary.toFixed(2),
+                    item.fullWeekly.toFixed(2),
+                    item.proRatedBase.toFixed(2),
+                    item.incentives.toFixed(2),
+                    item.totalWeekly.toFixed(2),
+                    `"${item.status}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            const timestamp = new Date().toISOString().slice(0, 10);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportSalaryPDF() {
+            const data = getExportSalaryData();
+            if (!data.length) {
+                alert("⚠️ No salary data available to export.");
+                return;
+            }
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ PDF library failed to load. Please check your internet connection.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+            // Title & Header Information
+            doc.setFontSize(16);
+            doc.setTextColor(37, 99, 235);
+            doc.text("REGION IX - SALARY DISBURSEMENT REPORT", 14, 15);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const subTitle = `Filter: ${currentSalarySubView} | Generated On: ${new Date().toLocaleString()} | Exported By: ${localStorage.getItem('username') || 'Admin'}`;
+            doc.text(subTitle, 14, 21);
+
+            const tableHeaders = [["Badge/ID", "Dept", "Title / Rank", "Name", "Base Salary", "Weekly Cap", "Pro-Rated Base", "Incentives", "Total Payable", "Status"]];
+            
+            const tableData = data.map(item => [
+                item.badge,
+                item.department,
+                item.title,
+                item.name,
+                formatCurrency(item.baseSalary),
+                formatCurrency(item.fullWeekly),
+                formatCurrency(item.proRatedBase),
+                formatCurrency(item.incentives),
+                formatCurrency(item.totalWeekly),
+                item.status
+            ]);
+
+            // Render PDF Table
+            doc.autoTable({
+                head: tableHeaders,
+                body: tableData,
+                startY: 26,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [240, 243, 248] },
+                styles: { fontSize: 8, cellPadding: 3 },
+                columnStyles: {
+                    4: { halign: 'right' },
+                    5: { halign: 'right' },
+                    6: { halign: 'right' },
+                    7: { halign: 'right' },
+                    8: { halign: 'right', fontStyle: 'bold' },
+                    9: { halign: 'center' }
+                }
+            });
+
+            // Calculate Totals for Footer Summary
+            const totalDisbursed = data.filter(d => d.status === 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
+            const totalUnpaid = data.filter(d => d.status !== 'PAID').reduce((sum, d) => sum + d.totalWeekly, 0);
+            const totalGross = totalDisbursed + totalUnpaid;
+
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(10);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total Gross Payroll: ${formatCurrency(totalGross)}`, 14, finalY);
+            doc.text(`Total Disbursed (Paid): ${formatCurrency(totalDisbursed)}`, 110, finalY);
+            doc.text(`Remaining Unpaid Balance: ${formatCurrency(totalUnpaid)}`, 200, finalY);
+
+            const timestamp = new Date().toISOString().slice(0, 10);
+            doc.save(`RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.pdf`);
         }
 
         async function handleSaveSalary(e) {
