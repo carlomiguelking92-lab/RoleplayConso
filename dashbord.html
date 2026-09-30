@@ -16,6 +16,7 @@
             --accent-green: #10b981;
             --accent-gold: #f59e0b;
             --accent-red: #ef4444;
+            --accent-sack-dollar: #f59e0b;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: #1e293b;
@@ -141,6 +142,18 @@
         .status-dropdown.unpaid { background-color: #ef4444; color: #ffffff; border-color: #dc2626; }
         .status-dropdown.inactive { background-color: #f59e0b; color: #000000; border-color: #d97706; }
         .status-dropdown option { background-color: #0f172a; color: #f3f4f6; font-weight: normal; }
+
+        .duty-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .duty-badge.completed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+        .duty-badge.partial { background-color: rgba(37, 99, 235, 0.2); color: #60a5fa; border: 1px solid #2563eb; }
+        .duty-badge.zero { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
 
         .salary-summary-banner {
             display: grid;
@@ -561,7 +574,7 @@
                         <button class="tab-btn active" id="btn-sal-tab-all" onclick="setSalarySubView('ALL')"><i class="fa-solid fa-list-check"></i> All View</button>
                         <button class="tab-btn" id="btn-sal-tab-pnp" onclick="setSalarySubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Salaries</button>
                         <button class="tab-btn" id="btn-sal-tab-gov" onclick="setSalarySubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Salaries</button>
-                        
+
                         <button id="btn-export-csv" class="btn-success" onclick="exportSalaryCSV()" style="height: 38px; font-weight: 700;">
                             <i class="fa-solid fa-paper-plane"></i> Dispatch CSV to Accounting
                         </button>
@@ -772,14 +785,18 @@
             <div id="view-nowork-nopay" class="view-section">
                 <div class="header">
                     <div>
-                        <h1>Attendance & Payroll ("No Work, No Pay")</h1>
-                        <p>Pro-rated weekly salary based on verified daily duty logs (1/7 daily rate)</p>
+                        <h1>Attendance & Duty Completion Audit</h1>
+                        <p>Pro-rated weekly salary & completion status derived from daily duty logs</p>
                     </div>
 
                     <div class="tab-btn-group" style="border: none; align-items: center;">
                         <button class="tab-btn active" id="btn-nowork-all" onclick="setNoWorkSubView('ALL')"><i class="fa-solid fa-list-check"></i> All View</button>
                         <button class="tab-btn" id="btn-nowork-pnp" onclick="setNoWorkSubView('PNP')"><i class="fa-solid fa-user-shield"></i> PNP Dept</button>
                         <button class="tab-btn" id="btn-nowork-gov" onclick="setNoWorkSubView('GOV')"><i class="fa-solid fa-landmark"></i> Gov Dept</button>
+                        
+                        <button id="triggerDailyReportBtn" onclick="triggerDailyQuotaReport()" class="btn-warning" style="height: 38px; font-weight: 700;">
+                            ☀️ Daily Report & Reset
+                        </button>
                     </div>
                 </div>
 
@@ -799,31 +816,30 @@
                 </div>
 
                 <div class="card" id="nowork-card-pnp">
-                    <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-user-shield"></i> PNP Attendance & Pro-Rated Payroll Roster</h3>
+                    <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-user-shield"></i> PNP Department — Duty Completion Audit</h3>
                     <div class="table-responsive" style="margin-top: 16px;">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Badge Number</th>
                                     <th>Officer Name</th>
-                                    <th>Rank</th>
+                                    <th>Rank / Position</th>
                                     <th>Weekly Attendance</th>
-                                    <th>Full Weekly Cap</th>
+                                    <th>Duty Completion Status</th>
                                     <th>Earned Base (Pro-Rated)</th>
                                     <th>Incentives</th>
                                     <th>Total Payable</th>
-                                    <th>Work Status</th>
                                 </tr>
                             </thead>
                             <tbody id="nowork-pnp-table-body">
-                                <tr><td colspan="9">Loading PNP attendance records...</td></tr>
+                                <tr><td colspan="8">Loading PNP attendance records...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <div class="card" id="nowork-card-gov">
-                    <h3 style="color: var(--accent-green);"><i class="fa-solid fa-landmark"></i> Government Attendance & Pro-Rated Payroll Roster</h3>
+                    <h3 style="color: var(--accent-green);"><i class="fa-solid fa-landmark"></i> Government Department — Duty Completion Audit</h3>
                     <div class="table-responsive" style="margin-top: 16px;">
                         <table>
                             <thead>
@@ -832,15 +848,14 @@
                                     <th>Member Name</th>
                                     <th>Position / Title</th>
                                     <th>Weekly Attendance</th>
-                                    <th>Full Weekly Cap</th>
+                                    <th>Duty Completion Status</th>
                                     <th>Earned Base (Pro-Rated)</th>
                                     <th>Incentives</th>
                                     <th>Total Payable</th>
-                                    <th>Work Status</th>
                                 </tr>
                             </thead>
                             <tbody id="nowork-gov-table-body">
-                                <tr><td colspan="9">Loading Government attendance records...</td></tr>
+                                <tr><td colspan="8">Loading Government attendance records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -957,6 +972,42 @@
             return 'PHP ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        async function triggerDailyQuotaReport() {
+            if (!confirm("Are you sure you want to manually trigger the Daily Quota Report? This will send the summaries to Discord (#pnp-proof, #gov-proof, #audit) and reset all daily proof counts to 0.")) {
+                return;
+            }
+
+            const btn = document.getElementById("triggerDailyReportBtn");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "⏳ Dispatching...";
+            }
+
+            try {
+                const res = await apiFetch('/api/salary/trigger-daily-report', {
+                    method: "POST"
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    alert("✅ " + (data.message || "Daily report dispatched successfully!"));
+                    fetchSalaryData();
+                    loadNoWorkNoPayTab();
+                } else {
+                    alert("❌ Error: " + (data.message || "Failed to trigger daily quota report."));
+                }
+            } catch (err) {
+                console.error("Failed to execute daily quota report trigger:", err);
+                alert("❌ Network error connecting to API server.");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "☀️ Daily Report & Reset";
+                }
+            }
+        }
+
         function getExportSalaryData() {
             if (!rawSalariesCache || !rawSalariesCache.length) return [];
 
@@ -1029,83 +1080,80 @@
                 return;
             }
 
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching CSV...';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching CSV...';
 
-        try {
-            const headers = [
-                "Badge/ID",
-                "Department",
-                "Title / Rank",
-                "Name",
-                "Base Salary",
-                "Full Weekly Cap",
-                "Pro-Rated Base",
-                "Incentives",
-                "Total Weekly Payable",
-                "Payment Status"
-            ];
-
-            const csvRows = [headers.join(',')];
-
-            let sumBase = 0;
-            let sumFullWk = 0;
-            let sumProRated = 0;
-            let sumInc = 0;
-            let sumTotalWk = 0;
-
-            // Data Rows: Pure numbers without inner commas to prevent CSV column breaking
-            data.forEach(item => {
-                sumBase += item.baseSalary;
-                sumFullWk += item.fullWeekly;
-                sumProRated += item.proRatedBase;
-                sumInc += item.incentives;
-                sumTotalWk += item.totalWeekly;
-
-                const row = [
-                    `"${item.badge}"`,
-                    `"${item.department}"`,
-                    `"${item.title.replace(/"/g, '""')}"`,
-                    `"${item.name.replace(/"/g, '""')}"`,
-                    item.baseSalary.toFixed(2),
-                    item.fullWeekly.toFixed(2),
-                    item.proRatedBase.toFixed(2),
-                    item.incentives.toFixed(2),
-                    item.totalWeekly.toFixed(2),
-                    `"${item.status}"`
+            try {
+                const headers = [
+                    "Badge/ID",
+                    "Department",
+                    "Title / Rank",
+                    "Name",
+                    "Base Salary",
+                    "Full Weekly Cap",
+                    "Pro-Rated Base",
+                    "Incentives",
+                    "Total Weekly Payable",
+                    "Payment Status"
                 ];
-                csvRows.push(row.join(','));
-            });
 
-            // Blank line before totals
-            csvRows.push('');
+                const csvRows = [headers.join(',')];
 
-            // Clean Summary Row
-            const summaryRow = [
-                `"TOTALS (${data.length} Personnel)"`,
-                `""`,
-                `""`,
-                `""`,
-                sumBase.toFixed(2),
-                sumFullWk.toFixed(2),
-                sumProRated.toFixed(2),
-                sumInc.toFixed(2),
-                sumTotalWk.toFixed(2),
-                `""`
-            ];
-            csvRows.push(summaryRow.join(','));
+                let sumBase = 0;
+                let sumFullWk = 0;
+                let sumProRated = 0;
+                let sumInc = 0;
+                let sumTotalWk = 0;
 
-            const csvString = csvRows.join('\r\n');
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const timestamp = new Date().toISOString().slice(0, 10);
-            const filename = `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.csv`;
+                data.forEach(item => {
+                    sumBase += item.baseSalary;
+                    sumFullWk += item.fullWeekly;
+                    sumProRated += item.proRatedBase;
+                    sumInc += item.incentives;
+                    sumTotalWk += item.totalWeekly;
 
-            await sendReportToAccountingChannel(blob, filename, 'csv');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Dispatch CSV to Accounting';
+                    const row = [
+                        `"${item.badge}"`,
+                        `"${item.department}"`,
+                        `"${item.title.replace(/"/g, '""')}"`,
+                        `"${item.name.replace(/"/g, '""')}"`,
+                        item.baseSalary.toFixed(2),
+                        item.fullWeekly.toFixed(2),
+                        item.proRatedBase.toFixed(2),
+                        item.incentives.toFixed(2),
+                        item.totalWeekly.toFixed(2),
+                        `"${item.status}"`
+                    ];
+                    csvRows.push(row.join(','));
+                });
+
+                csvRows.push('');
+
+                const summaryRow = [
+                    `"TOTALS (${data.length} Personnel)"`,
+                    `""`,
+                    `""`,
+                    `""`,
+                    sumBase.toFixed(2),
+                    sumFullWk.toFixed(2),
+                    sumProRated.toFixed(2),
+                    sumInc.toFixed(2),
+                    sumTotalWk.toFixed(2),
+                    `""`
+                ];
+                csvRows.push(summaryRow.join(','));
+
+                const csvString = csvRows.join('\r\n');
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const filename = `RegionIX_Salary_Report_${currentSalarySubView}_${timestamp}.csv`;
+
+                await sendReportToAccountingChannel(blob, filename, 'csv');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Dispatch CSV to Accounting';
+            }
         }
-    }
 
         async function exportSalaryPDF() {
             const btn = document.getElementById('btn-export-pdf');
@@ -1261,8 +1309,8 @@
             const tbodyPnp = document.getElementById('nowork-pnp-table-body');
             const tbodyGov = document.getElementById('nowork-gov-table-body');
 
-            if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="9">Loading PNP attendance records...</td></tr>';
-            if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="9">Loading Government attendance records...</td></tr>';
+            if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="8">Loading PNP attendance records...</td></tr>';
+            if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="8">Loading Government attendance records...</td></tr>';
 
             try {
                 const res = await apiFetch('/api/salary');
@@ -1285,7 +1333,7 @@
                 let totalPayrollPool = 0;
 
                 const renderRows = (list) => {
-                    if (!list.length) return '<tr><td colspan="9">No attendance records found.</td></tr>';
+                    if (!list.length) return '<tr><td colspan="8">No personnel records found.</td></tr>';
                     return list.map(item => {
                         const days = item.daysAttended || item.days_attended || (item.days !== undefined ? item.days : 0);
                         const baseMonthly = parseCurrency(item.baseSalary || item.salary);
@@ -1303,14 +1351,15 @@
                             else zeroCount++;
                         }
 
-                        const statusVal = (item.status || 'unpaid').toLowerCase();
-                        let statusBadge = '';
-                        if (days === 0 && !isGen) {
-                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">NO WORK (PHP 0.00)</span>';
-                        } else if (statusVal === 'paid') {
-                            statusBadge = '<span class="status-dropdown paid" style="display:inline-block; text-align:center; padding:4px 8px;">PAID</span>';
+                        let dutyBadge = '';
+                        if (isGen) {
+                            dutyBadge = '<span class="duty-badge completed"><i class="fa-solid fa-star"></i> EXEMPT (100%)</span>';
+                        } else if (days >= 7) {
+                            dutyBadge = '<span class="duty-badge completed"><i class="fa-solid fa-circle-check"></i> COMPLETED (7/7)</span>';
+                        } else if (days > 0) {
+                            dutyBadge = `<span class="duty-badge partial"><i class="fa-solid fa-clock"></i> IN PROGRESS (${days}/7)</span>`;
                         } else {
-                            statusBadge = '<span class="status-dropdown unpaid" style="display:inline-block; text-align:center; padding:4px 8px;">UNPAID</span>';
+                            dutyBadge = '<span class="duty-badge zero"><i class="fa-solid fa-circle-xmark"></i> NO DUTY (0/7)</span>';
                         }
 
                         const rawKey = item.badge_id || item.badgeId || item.id || '';
@@ -1326,11 +1375,10 @@
                                         <progress value="${isGen ? 7 : days}" max="7" style="width: 60px;"></progress>
                                     </div>
                                 </td>
-                                <td>${formatCurrency(fullWeekly)}</td>
+                                <td>${dutyBadge}</td>
                                 <td><strong style="color: var(--accent-green);">${formatCurrency(earnedBase)}</strong></td>
                                 <td>${formatCurrency(incentives)}</td>
                                 <td><strong>${formatCurrency(totalPayable)}</strong></td>
-                                <td>${statusBadge}</td>
                             </tr>
                         `;
                     }).join('');
@@ -1358,9 +1406,9 @@
                 document.getElementById('nowork-total-payroll').innerText = formatCurrency(totalPayrollPool);
 
             } catch (err) {
-                console.error('Error loading No Work No Pay tab:', err);
-                if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
-                if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="9" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
+                console.error('Error loading Attendance Audit tab:', err);
+                if (tbodyPnp) tbodyPnp.innerHTML = '<tr><td colspan="8" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
+                if (tbodyGov) tbodyGov.innerHTML = '<tr><td colspan="8" style="color:#ef4444;">Failed to load attendance records.</td></tr>';
             }
         }
 
