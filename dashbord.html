@@ -16,7 +16,6 @@
             --accent-green: #10b981;
             --accent-gold: #f59e0b;
             --accent-red: #ef4444;
-            --accent-sack-dollar: #f59e0b;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: #1e293b;
@@ -810,7 +809,7 @@
                         <div class="metric-data"><h3 id="nowork-zero-count">0</h3><p id="nowork-lbl-inactive">Inactive Personnel (0 Days / PHP 0)</p></div>
                     </div>
                     <div class="metric-card">
-                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-sack-dollar);"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="icon-box" style="background-color: rgba(37, 99, 235, 0.2); color: var(--accent-gold);"><i class="fa-solid fa-sack-dollar"></i></div>
                         <div class="metric-data"><h3 id="nowork-total-payroll">PHP 0.00</h3><p id="nowork-lbl-payroll">Total Payroll Due</p></div>
                     </div>
                 </div>
@@ -1251,9 +1250,12 @@
         }
 
         function initChartIfNeeded() {
-            if (dutyChart) return;
             const canvas = document.getElementById('dutyChart');
             if (!canvas) return;
+
+            if (dutyChart) {
+                dutyChart.destroy();
+            }
 
             const ctx = canvas.getContext('2d');
             dutyChart = new Chart(ctx, {
@@ -1900,6 +1902,12 @@
             const baseSalary = parseFloat(document.getElementById('sal-base').value) || 0;
             const incentives = parseFloat(document.getElementById('sal-incentives').value) || 0;
 
+            if (baseSalary < 0 || incentives < 0) {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerText = '❌ Base salary and incentives must be non-negative values.';
+                return;
+            }
+
             msgDiv.style.color = '#60a5fa';
             msgDiv.innerText = '⏳ Saving salary entry...';
             btn.disabled = true;
@@ -2198,6 +2206,17 @@
             const treasuryCard = document.getElementById('card-treasury-control');
             if (treasuryCard) treasuryCard.style.display = 'none';
 
+            // Button controls
+            const btnCsv = document.getElementById('btn-export-csv');
+            const btnPdf = document.getElementById('btn-export-pdf');
+            const btnReport = document.getElementById('triggerDailyReportBtn');
+
+            const isFullAdmin = (role === 'SUPER_ADMIN' || role === 'ADMIN') && status === 'APPROVED';
+
+            if (btnCsv) btnCsv.style.display = isFullAdmin ? 'inline-block' : 'none';
+            if (btnPdf) btnPdf.style.display = isFullAdmin ? 'inline-block' : 'none';
+            if (btnReport) btnReport.style.display = isFullAdmin ? 'inline-block' : 'none';
+
             if (status !== 'APPROVED' && role !== 'SUPER_ADMIN') {
                 return;
             }
@@ -2244,8 +2263,26 @@
                         const safeUserId = escapeJsArg(u.id || u._id || u.userId);
                         const badgeNo = u.badgeId || u.badge_id || u.badge || 'N/A';
                         const department = u.department || u.dept || 'N/A';
-                        const role = u.role || u.userRole || 'MEMBER';
-                        const accountStatus = u.status || u.accountStatus || 'PENDING';
+                        const role = (u.role || u.userRole || 'MEMBER').toUpperCase();
+                        const accountStatus = (u.status || u.accountStatus || 'PENDING').toUpperCase();
+
+                        let actionButtons = '';
+
+                        if (accountStatus === 'PENDING') {
+                            actionButtons = `
+                                <button class="btn-success" onclick="updateAccountRole('${safeUserId}', 'ADMIN', 'APPROVED')">Approve Admin</button>
+                                <button class="btn-primary" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'APPROVED')">Approve Member</button>
+                                <button class="btn-warning" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'REJECTED')">Reject</button>
+                            `;
+                        } else {
+                            if (role === 'ADMIN') {
+                                actionButtons += `<button class="btn-primary" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'APPROVED')">Set as Regular</button>`;
+                            } else {
+                                actionButtons += `<button class="btn-success" onclick="updateAccountRole('${safeUserId}', 'ADMIN', 'APPROVED')">Make Admin</button>`;
+                            }
+                        }
+
+                        actionButtons += `<button class="btn-danger" onclick="deleteUserAccount('${safeUserId}')">Delete</button>`;
 
                         return `
                             <tr>
@@ -2256,10 +2293,7 @@
                                 <td><span class="badge-ref">${escapeHTML(accountStatus)}</span></td>
                                 <td>
                                     <div class="action-cell">
-                                        <button class="btn-success" onclick="updateAccountRole('${safeUserId}', 'ADMIN', 'APPROVED')">Make Admin</button>
-                                        <button class="btn-primary" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'APPROVED')">Approve Member</button>
-                                        <button class="btn-warning" onclick="updateAccountRole('${safeUserId}', 'MEMBER', 'REJECTED')">Reject</button>
-                                        <button class="btn-danger" onclick="deleteUserAccount('${safeUserId}')">Delete</button>
+                                        ${actionButtons}
                                     </div>
                                 </td>
                             </tr>
